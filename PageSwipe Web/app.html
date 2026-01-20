@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>PageSwipe</title>
+    <meta name="description" content="Your personal book discovery and tracking dashboard">
+
+    <!-- Mobile optimization -->
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/WraptIcon.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen (shown during auth check) -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <img src="images/WraptIcon.png" alt="PageSwipe" class="loading-logo">
+                <svg class="loading-spinner" viewBox="0 0 50 50">
+                    <defs>
+                        <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#2dd4bf"/>
+                            <stop offset="100%" stop-color="#f97356"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="url(#spinner-gradient)" stroke-width="5" stroke-linecap="round" stroke-dasharray="90 150"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Auth View (shown when not logged in) -->
+        <div id="auth-view" class="auth-view" style="display: none;">
+            <div class="auth-container">
+                <div class="auth-left">
+                    <div class="auth-brand">
+                        <div class="auth-logo">
+                            <img src="images/WraptIcon.png" alt="PageSwipe" class="auth-logo-img">
+                            <span class="auth-logo-text">PageSwipe</span>
+                        </div>
+                        <p class="auth-tagline">Create book clubs with friends & family</p>
+                    </div>
+
+                    <div class="auth-illustration">
+                        <div class="auth-books">
+                            <div class="auth-book"></div>
+                            <div class="auth-book"></div>
+                            <div class="auth-book"></div>
+                            <div class="auth-book"></div>
+                            <div class="auth-book"></div>
+                        </div>
+                    </div>
+
+                    <div class="auth-features">
+                        <div class="auth-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                            <span>Swipe to discover</span>
+                        </div>
+                        <div class="auth-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                            <span>Organize your library</span>
+                        </div>
+                        <div class="auth-feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span>Join book clubs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-right">
+                    <a href="/" class="auth-back-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        Back to home
+                    </a>
+                    <!-- Sign In Form -->
+                    <div id="signin-form" class="auth-form">
+                        <h1 class="auth-title">Welcome back</h1>
+                        <p class="auth-subtitle">Sign in to continue your reading journey</p>
+
+                        <div class="auth-social">
+                            <button class="auth-social-btn" id="google-signin">
+                                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                Continue with Google
+                            </button>
+                            <button class="auth-social-btn" id="apple-signin">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                                Continue with Apple
+                            </button>
+                        </div>
+
+                        <div class="auth-divider">
+                            <span>or continue with email</span>
+                        </div>
+
+                        <form id="signin-email-form">
+                            <div class="form-group">
+                                <label for="signin-email">Email</label>
+                                <input type="email" id="signin-email" placeholder="you@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="signin-password">Password</label>
+                                <input type="password" id="signin-password" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                        </form>
+
+                        <p class="auth-switch">
+                            Don't have an account? <a href="#" id="show-signup">Create one</a>
+                        </p>
+                    </div>
+
+                    <!-- Sign Up Form -->
+                    <div id="signup-form" class="auth-form" style="display: none;">
+                        <h1 class="auth-title">Create account</h1>
+                        <p class="auth-subtitle">Start your reading journey today</p>
+
+                        <div class="auth-social">
+                            <button class="auth-social-btn" id="google-signup">
+                                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                Continue with Google
+                            </button>
+                            <button class="auth-social-btn" id="apple-signup">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                                Continue with Apple
+                            </button>
+                        </div>
+
+                        <div class="auth-divider">
+                            <span>or continue with email</span>
+                        </div>
+
+                        <form id="signup-email-form">
+                            <div class="form-group">
+                                <label for="signup-name">Display Name</label>
+                                <input type="text" id="signup-name" placeholder="Your name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-email">Email</label>
+                                <input type="email" id="signup-email" placeholder="you@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-password">Password</label>
+                                <input type="password" id="signup-password" placeholder="Create a password" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                        </form>
+
+                        <p class="auth-switch">
+                            Already have an account? <a href="#" id="show-signin">Sign in</a>
+                        </p>
+                    </div>
+
+                    <div id="auth-error" class="auth-error"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App View (shown when logged in) -->
+        <div id="main-app" class="main-app" style="display: none;">
+            <!-- Mobile Header -->
+            <header class="mobile-header">
+                <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Open menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="mobile-logo">
+                    <img src="images/WraptIcon.png" alt="PageSwipe">
+                    <span>PageSwipe</span>
+                </div>
+                <div style="width: 40px;"></div>
+            </header>
+
+            <!-- Sidebar Overlay -->
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <img src="images/WraptIcon.png" alt="PageSwipe" class="sidebar-logo-img">
+                        <span class="sidebar-logo-text">PageSwipe</span>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active" data-view="home">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        </span>
+                        <span class="nav-label">Home</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="discover">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                        </span>
+                        <span class="nav-label">Discover</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="library">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        </span>
+                        <span class="nav-label">Library</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="clubs">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </span>
+                        <span class="nav-label">Clubs</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <a href="#" class="nav-item" data-view="profile">
+                        <div class="user-avatar" id="sidebar-avatar">?</div>
+                        <span class="nav-label" id="sidebar-username">Profile</span>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Home View -->
+                <div id="home-view" class="view active">
+                    <header class="home-header-compact">
+                        <div class="greeting-compact">
+                            <p class="greeting-name" id="greeting-name">Welcome back</p>
+                            <h1 class="greeting-text" id="greeting-text">Good morning</h1>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="add-book-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Book
+                        </button>
+                    </header>
+
+                    <div class="home-content">
+                        <!-- Stats Row - Compact Inline -->
+                        <div class="stats-row">
+                            <div class="stat-pill">
+                                <span class="stat-pill-value" id="stat-reading">0</span>
+                                <span class="stat-pill-label">Reading</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-value" id="stat-finished">0</span>
+                                <span class="stat-pill-label">Finished</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-value" id="stat-lists">0</span>
+                                <span class="stat-pill-label">Lists</span>
+                            </div>
+                            <div class="stat-pill">
+                                <span class="stat-pill-value" id="stat-clubs">0</span>
+                                <span class="stat-pill-label">Clubs</span>
+                            </div>
+                        </div>
+
+                        <!-- Two Column Layout for Main Content -->
+                        <div class="home-grid">
+                            <!-- Currently Reading Section -->
+                            <section class="home-card">
+                                <div class="home-card-header">
+                                    <div class="home-card-title">
+                                        <div class="home-card-icon reading">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                                        </div>
+                                        <h2>Currently Reading</h2>
+                                    </div>
+                                    <a href="#" class="home-card-link" data-view="library">View Library</a>
+                                </div>
+                                <div class="home-card-content" id="currently-reading">
+                                    <div class="empty-state-inline">
+                                        <p>No books in progress</p>
+                                        <button class="btn btn-accent btn-sm" data-view="discover">Discover Books</button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Your Clubs Section -->
+                            <section class="home-card">
+                                <div class="home-card-header">
+                                    <div class="home-card-title">
+                                        <div class="home-card-icon clubs">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        </div>
+                                        <h2>Your Clubs</h2>
+                                    </div>
+                                    <a href="#" class="home-card-link" data-view="clubs">View All</a>
+                                </div>
+                                <div class="home-card-content" id="clubs-preview">
+                                    <div class="empty-state-inline">
+                                        <p>Join a club to read with friends</p>
+                                        <button class="btn btn-accent btn-sm" id="join-club-home">Join a Club</button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <section class="quick-actions">
+                            <h3>Quick Actions</h3>
+                            <div class="quick-actions-grid">
+                                <button class="quick-action-btn" data-view="discover">
+                                    <div class="quick-action-icon discover">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                                    </div>
+                                    <span>Discover</span>
+                                </button>
+                                <button class="quick-action-btn" id="quick-add-book">
+                                    <div class="quick-action-icon add">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    </div>
+                                    <span>Add Book</span>
+                                </button>
+                                <button class="quick-action-btn" id="quick-create-list">
+                                    <div class="quick-action-icon list">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                    </div>
+                                    <span>New List</span>
+                                </button>
+                                <button class="quick-action-btn" id="quick-create-club">
+                                    <div class="quick-action-icon club">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                                    </div>
+                                    <span>Create Club</span>
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Discover View -->
+                <div id="discover-view" class="view">
+                    <header class="compact-header">
+                        <h1>Discover</h1>
+                        <div class="compact-header-actions">
+                            <div class="genre-select-wrapper">
+                                <select id="genre-select" class="genre-select">
+                                    <option value="random">Random</option>
+                                    <option value="romance">Romance</option>
+                                    <option value="thriller">Thriller</option>
+                                    <option value="mystery">Mystery</option>
+                                    <option value="fantasy">Fantasy</option>
+                                    <option value="scifi">Sci-Fi</option>
+                                    <option value="horror">Horror</option>
+                                    <option value="literary">Literary Fiction</option>
+                                    <option value="historical">Historical Fiction</option>
+                                    <option value="contemporary">Contemporary</option>
+                                    <option value="youngadult">Young Adult</option>
+                                    <option value="selfhelp">Self-Help</option>
+                                    <option value="biography">Biography</option>
+                                    <option value="business">Business</option>
+                                    <option value="psychology">Psychology</option>
+                                    <option value="truecrime">True Crime</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-icon" id="refresh-discover">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="discover-content">
+                        <div class="swipe-container" id="swipe-container">
+                            <div class="swipe-cards" id="swipe-cards">
+                                <!-- Cards will be dynamically inserted -->
+                            </div>
+
+                            <div class="swipe-empty" id="swipe-empty" style="display: none;">
+                                <div class="empty-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                </div>
+                                <h3>You're all caught up</h3>
+                                <p>Check back later for more recommendations</p>
+                                <button class="btn btn-primary" id="reload-cards">Load More Books</button>
+                            </div>
+                        </div>
+
+                        <div class="swipe-actions-compact">
+                            <div class="swipe-add-to-list">
+                                <label for="swipe-list-select">Add to list:</label>
+                                <select id="swipe-list-select" class="swipe-list-dropdown">
+                                    <!-- Lists will be populated dynamically -->
+                                </select>
+                                <button class="btn btn-sm btn-primary" id="swipe-add-to-list-btn">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Library View -->
+                <div id="library-view" class="view">
+                    <header class="compact-header">
+                        <h1>Library</h1>
+                        <button class="btn btn-sm btn-primary" id="create-list-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            New
+                        </button>
+                    </header>
+
+                    <div class="library-content">
+                        <div class="lists-grid" id="lists-grid">
+                            <!-- Lists will be dynamically inserted -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List Detail View -->
+                <div id="list-detail-view" class="view">
+                    <header class="compact-header">
+                        <button class="btn btn-icon back-btn" id="back-to-library">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <div class="compact-header-title">
+                            <h1 id="list-detail-title">List Name</h1>
+                            <span class="compact-header-meta" id="list-detail-count">0 books</span>
+                        </div>
+                        <button class="btn btn-icon" id="list-options-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                        </button>
+                    </header>
+
+                    <div class="list-detail-content">
+                        <div class="books-grid" id="list-books">
+                            <!-- Books will be dynamically inserted -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clubs View -->
+                <div id="clubs-view" class="view">
+                    <header class="compact-header">
+                        <h1>Clubs</h1>
+                        <div class="compact-header-actions">
+                            <button class="btn btn-sm btn-secondary" id="join-club-btn">Join</button>
+                            <button class="btn btn-sm btn-primary" id="create-club-btn">Create</button>
+                        </div>
+                    </header>
+
+                    <div class="clubs-content">
+                        <div class="clubs-grid" id="clubs-grid">
+                            <!-- Clubs will be dynamically inserted -->
+                        </div>
+
+                        <div class="empty-state" id="clubs-empty">
+                            <div class="empty-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3>No clubs yet</h3>
+                            <p>Create a club or join one with a code</p>
+                            <div class="empty-actions">
+                                <button class="btn btn-secondary" id="join-club-empty">Join with Code</button>
+                                <button class="btn btn-primary" id="create-club-empty">Create Club</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Club Detail View -->
+                <div id="club-detail-view" class="view club-detail-view-redesign">
+                    <!-- Compact Header: back | title | actions -->
+                    <header class="club-header-compact">
+                        <button class="btn btn-icon back-btn" id="back-to-clubs">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <h1 class="club-header-title" id="club-detail-name">Club Name</h1>
+                        <div class="club-header-actions">
+                            <button class="btn btn-icon" id="club-share-btn" title="Share">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                            </button>
+                            <button class="btn btn-icon" id="club-settings-btn" title="Settings">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </button>
+                        </div>
+                    </header>
+
+                    <!-- Compact Info Bar -->
+                    <div class="club-info-bar">
+                        <span class="club-info-members" id="club-detail-members">0 members</span>
+                        <span class="club-info-separator">•</span>
+                        <span class="club-info-description" id="club-description"></span>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="club-tabs-container">
+                        <div class="club-tabs-redesign">
+                            <button class="club-tab-new active" data-tab="books">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                <span>Books</span>
+                            </button>
+                            <button class="club-tab-new" data-tab="members">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span>Members</span>
+                            </button>
+                            <button class="club-tab-new" data-tab="activity">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                <span>Activity</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="club-detail-content">
+                        <!-- Books Tab -->
+                        <div class="club-tab-content active" id="club-books-tab">
+                            <div class="club-books-grid" id="club-books">
+                                <!-- Books will be dynamically inserted -->
+                            </div>
+                            <div class="empty-state-card" id="club-books-empty" style="display: none;">
+                                <div class="empty-state-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                </div>
+                                <h3>No books yet</h3>
+                                <p>Share a book from your library to get the conversation started</p>
+                                <button class="btn btn-accent" id="add-first-book">Add Your First Book</button>
+                            </div>
+                        </div>
+
+                        <!-- Members Tab -->
+                        <div class="club-tab-content" id="club-members-tab">
+                            <div class="members-list-redesign" id="club-members">
+                                <!-- Members will be dynamically inserted -->
+                            </div>
+                        </div>
+
+                        <!-- Activity Tab -->
+                        <div class="club-tab-content" id="club-activity-tab">
+                            <div class="activity-feed-redesign" id="club-activity">
+                                <!-- Activity will be dynamically inserted -->
+                            </div>
+                            <div class="empty-state-card" id="club-activity-empty" style="display: none;">
+                                <div class="empty-state-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                </div>
+                                <h3>No activity yet</h3>
+                                <p>When members add books or share updates, they'll appear here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Action Button -->
+                    <button class="club-fab" id="add-book-to-club">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+
+                <!-- Club Settings Modal -->
+                <div class="modal" id="club-settings-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Club Settings</h2>
+                            <button class="btn btn-icon modal-close" data-modal="club-settings-modal">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="club-join-code-display">
+                                <label>Join Code</label>
+                                <div class="join-code-box">
+                                    <span id="club-join-code-display">ABC123</span>
+                                    <button class="btn btn-icon btn-sm" id="copy-join-code" title="Copy code">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    </button>
+                                </div>
+                                <p class="help-text">Share this code with friends to invite them</p>
+                            </div>
+
+                            <div class="club-settings-actions">
+                                <button class="btn btn-secondary btn-block" id="leave-club-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    Leave Club
+                                </button>
+                                <button class="btn btn-danger btn-block" id="delete-club-btn" style="display: none;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    Delete Club
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Book to Club Modal -->
+                <div class="modal" id="add-book-club-modal">
+                    <div class="modal-content modal-lg">
+                        <div class="modal-header">
+                            <h2>Add Book to Club</h2>
+                            <button class="btn btn-icon modal-close" data-modal="add-book-club-modal">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="modal-subtitle">Select a book from your library to share with the club</p>
+                            <div class="user-books-grid" id="user-books-for-club">
+                                <!-- User's books will be loaded here -->
+                            </div>
+                            <div class="empty-state" id="user-books-empty" style="display: none;">
+                                <p>No books in your library yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Club Book Detail Modal -->
+                <div class="modal" id="club-book-modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 id="club-book-title">Book Title</h2>
+                            <button class="btn btn-icon modal-close" data-modal="club-book-modal">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="club-book-detail">
+                                <div class="club-book-cover" id="club-book-cover"></div>
+                                <div class="club-book-info">
+                                    <p class="club-book-author" id="club-book-author">Author</p>
+                                    <div class="club-book-description-wrapper">
+                                        <p class="club-book-description" id="club-book-description">Description</p>
+                                        <button class="club-book-readmore" id="club-book-readmore">Read More</button>
+                                    </div>
+                                    <div class="club-book-meta">
+                                        <span id="club-book-added-by">Added by Someone</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="club-book-interested">
+                                <h4>Interested Members (<span id="interested-count">0</span>)</h4>
+                                <div class="interested-members" id="interested-members-list">
+                                    <!-- Interested members will be shown here -->
+                                </div>
+                            </div>
+                            <div class="club-book-actions">
+                                <button class="btn btn-primary" id="mark-interested-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    I'm Interested
+                                </button>
+                                <button class="btn btn-ghost" id="mark-not-interested-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                    Hide Book
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile View -->
+                <div id="profile-view" class="view">
+                    <header class="compact-header">
+                        <h1>Profile</h1>
+                        <button class="btn btn-icon" id="settings-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </button>
+                    </header>
+
+                    <div class="profile-content">
+                        <div class="profile-card">
+                            <div class="profile-avatar" id="profile-avatar">?</div>
+                            <h2 id="profile-name">User Name</h2>
+                            <p id="profile-email">user@example.com</p>
+                            <span class="profile-badge" id="profile-badge">Free</span>
+                        </div>
+
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <span class="profile-stat-value" id="profile-books-read">0</span>
+                                <span class="profile-stat-label">Books Read</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-value" id="profile-this-year">0</span>
+                                <span class="profile-stat-label">This Year</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-value" id="profile-clubs-count">0</span>
+                                <span class="profile-stat-label">Clubs</span>
+                            </div>
+                        </div>
+
+                        <div class="profile-actions">
+                            <button class="btn btn-secondary btn-full" id="edit-profile-btn">Edit Profile</button>
+                            <button class="btn btn-ghost btn-full" id="signout-btn">Sign Out</button>
+                        </div>
+
+                        <div class="upgrade-card" id="upgrade-card">
+                            <div class="upgrade-badge">PRO</div>
+                            <h3>Upgrade to Pro</h3>
+                            <p>Unlimited lists, clubs, and more</p>
+                            <button class="btn btn-primary btn-full">Upgrade Now</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Bottom Navigation (Mobile) -->
+            <nav class="bottom-nav" id="bottom-nav">
+                <a href="#" class="bottom-nav-item active" data-view="home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-view="discover">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                    <span>Discover</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-view="library">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <span>Library</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-view="clubs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Clubs</span>
+                </a>
+                <a href="#" class="bottom-nav-item" data-view="profile">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>Profile</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Modals -->
+        <!-- Add Book Modal -->
+        <div id="add-book-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add a Book</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-box">
+                        <input type="text" id="book-search-input" placeholder="Search by title, author, or ISBN...">
+                        <button class="btn btn-primary" id="book-search-btn">Search</button>
+                        <button class="btn btn-icon btn-scan" id="barcode-scan-btn" title="Scan barcode">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                                <line x1="7" y1="12" x2="17" y2="12"/>
+                                <line x1="7" y1="8" x2="10" y2="8"/>
+                                <line x1="14" y1="8" x2="17" y2="8"/>
+                                <line x1="7" y1="16" x2="10" y2="16"/>
+                                <line x1="14" y1="16" x2="17" y2="16"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="search-results" id="book-search-results">
+                        <div class="search-prompt">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <p>Search for books by title, author, or ISBN</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barcode Scanner Modal -->
+        <div id="scanner-modal" class="modal scanner-modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content scanner-modal-content">
+                <div class="scanner-header">
+                    <h2>Scan Barcode</h2>
+                    <button class="btn btn-icon modal-close" id="scanner-close-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="scanner-body">
+                    <div id="scanner-preview" class="scanner-preview"></div>
+                    <div class="scanner-overlay">
+                        <div class="scanner-frame">
+                            <div class="scanner-corner top-left"></div>
+                            <div class="scanner-corner top-right"></div>
+                            <div class="scanner-corner bottom-left"></div>
+                            <div class="scanner-corner bottom-right"></div>
+                        </div>
+                    </div>
+                    <p class="scanner-hint">Position the barcode within the frame</p>
+                </div>
+                <div class="scanner-error" id="scanner-error">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p id="scanner-error-text">Camera error</p>
+                    <button class="btn btn-secondary" id="scanner-retry-btn">Try Again</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barcode Preview Modal -->
+        <div id="barcode-preview-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Book Found</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="barcode-preview">
+                        <div class="barcode-preview-cover" id="barcode-preview-cover"></div>
+                        <div class="barcode-preview-info">
+                            <h3 class="barcode-preview-title" id="barcode-preview-title">Book Title</h3>
+                            <p class="barcode-preview-author" id="barcode-preview-author">Author Name</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="barcode-preview-save">Save to List</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create List Modal -->
+        <div id="create-list-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Create New List</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-list-form">
+                        <div class="form-group">
+                            <label for="list-name">List Name</label>
+                            <input type="text" id="list-name" placeholder="e.g., Summer Reads 2026" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="list-description">Description (optional)</label>
+                            <textarea id="list-description" placeholder="What's this list about?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Create List</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Club Modal -->
+        <div id="create-club-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Create Book Club</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-club-form">
+                        <div class="form-group">
+                            <label for="club-name">Club Name</label>
+                            <input type="text" id="club-name" placeholder="e.g., Weekend Readers" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="club-description">Description (optional)</label>
+                            <textarea id="club-description" placeholder="What's your club about?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Create Club</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Join Club Modal -->
+        <div id="join-club-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Join a Club</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="join-club-form">
+                        <div class="form-group">
+                            <label for="join-code">Enter Club Code</label>
+                            <input type="text" id="join-code" class="join-code-input" placeholder="ABC123" maxlength="6" required>
+                        </div>
+                        <p class="form-hint">Ask the club owner for the 6-character join code</p>
+                        <button type="submit" class="btn btn-primary btn-full">Join Club</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Picker Modal -->
+        <div id="list-picker-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Add to List</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-picker" id="list-picker">
+                        <!-- Lists will be dynamically inserted -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Detail Modal -->
+        <!-- Discover Read More Modal -->
+        <div id="book-detail-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-book-detail">
+                <button class="modal-close-float">&times;</button>
+                <div class="book-detail-layout">
+                    <div class="book-detail-cover" id="book-detail-cover"></div>
+                    <div class="book-detail-info">
+                        <h2 class="book-detail-title" id="book-detail-title">Book Title</h2>
+                        <p class="book-detail-author" id="book-detail-author">Author Name</p>
+                        <div class="book-detail-meta" id="book-detail-meta"></div>
+                    </div>
+                </div>
+                <div class="book-detail-description-full" id="book-detail-description">
+                    Description will appear here.
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Book Detail Modal (with progress/actions) -->
+        <div id="library-book-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>Book Details</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body" id="library-book-content">
+                    <!-- Library book details will be dynamically inserted -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Move to List Modal -->
+        <div id="move-to-list-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Move to List</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-picker" id="move-list-picker">
+                        <!-- Lists will be dynamically inserted -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discover Tutorial Modal -->
+        <div id="discover-tutorial-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-tutorial">
+                <div class="tutorial-content">
+                    <div class="tutorial-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <h2>Welcome to Discover</h2>
+                    <p class="tutorial-intro">Swipe through book recommendations to build your reading list.</p>
+                    <div class="tutorial-instructions">
+                        <div class="tutorial-item">
+                            <div class="tutorial-gesture">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                            </div>
+                            <div class="tutorial-text">
+                                <strong>Swipe Left</strong>
+                                <span>Not interested? Skip to the next book</span>
+                            </div>
+                        </div>
+                        <div class="tutorial-item">
+                            <div class="tutorial-gesture right">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                            </div>
+                            <div class="tutorial-text">
+                                <strong>Swipe Right</strong>
+                                <span>Adds book to your Want to Read list</span>
+                            </div>
+                        </div>
+                        <div class="tutorial-item">
+                            <div class="tutorial-gesture dropdown">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="tutorial-text">
+                                <strong>Dropdown Below</strong>
+                                <span>Choose a different list to add the book to</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="dismissDiscoverTutorial()">Start Discovering</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div id="edit-profile-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Edit Profile</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-profile-form">
+                        <!-- Profile Photo Section -->
+                        <div class="form-group profile-photo-section">
+                            <label>Profile Photo</label>
+                            <div class="profile-photo-editor">
+                                <div class="profile-photo-preview" id="profile-photo-preview">
+                                    <span class="profile-photo-initials" id="profile-photo-initials">?</span>
+                                    <img class="profile-photo-image" id="profile-photo-image" src="" alt="" style="display: none;">
+                                </div>
+                                <div class="profile-photo-actions">
+                                    <label class="btn btn-secondary btn-sm" for="profile-photo-input">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span id="photo-btn-text">Upload Photo</span>
+                                    </label>
+                                    <input type="file" id="profile-photo-input" accept="image/jpeg,image/png,image/webp" style="display: none;">
+                                    <button type="button" class="btn btn-ghost btn-sm" id="remove-photo-btn" style="display: none;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-display-name">Display Name</label>
+                            <input type="text" id="edit-display-name" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-bio">Bio (optional)</label>
+                            <textarea id="edit-bio" placeholder="Tell us about your reading interests..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-reading-goal">Annual Reading Goal</label>
+                            <input type="number" id="edit-reading-goal" placeholder="e.g., 24 books" min="1" max="365">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Member Profile Modal -->
+        <div id="member-profile-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-member-profile">
+                <div class="modal-header">
+                    <h2>Member Profile</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="member-profile-header">
+                        <div class="member-profile-avatar" id="member-profile-avatar"></div>
+                        <div class="member-profile-info">
+                            <h3 class="member-profile-name" id="member-profile-name">Member Name</h3>
+                            <span class="member-profile-badge" id="member-profile-badge" style="display: none;">Owner</span>
+                            <p class="member-profile-joined" id="member-profile-joined">Joined recently</p>
+                        </div>
+                    </div>
+                    <div class="member-profile-stats">
+                        <div class="member-profile-stat">
+                            <span class="member-profile-stat-value" id="member-profile-books-added">0</span>
+                            <span class="member-profile-stat-label">Books Added</span>
+                        </div>
+                        <div class="member-profile-stat">
+                            <span class="member-profile-stat-value" id="member-profile-books-interested">0</span>
+                            <span class="member-profile-stat-label">Interested In</span>
+                        </div>
+                    </div>
+                    <div class="member-profile-section" id="member-books-added-section">
+                        <h4 class="member-profile-section-title">Books Added</h4>
+                        <div class="member-books-scroll" id="member-books-added"></div>
+                    </div>
+                    <div class="member-profile-section" id="member-books-interested-section">
+                        <h4 class="member-profile-section-title">Interested In</h4>
+                        <div class="member-books-scroll" id="member-books-interested"></div>
+                    </div>
+                    <div class="member-profile-empty" id="member-profile-empty" style="display: none;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        <p>No book activity yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Profile</h3>
+                        <button class="settings-item" id="settings-edit-profile">
+                            <span class="settings-item-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </span>
+                            <span class="settings-item-text">Edit profile</span>
+                            <span class="settings-item-chevron">&rsaquo;</span>
+                        </button>
+                    </div>
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Notifications</h3>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">Club activity</span>
+                            <input type="checkbox" id="notify-club-activity" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">Reading reminders</span>
+                            <input type="checkbox" id="notify-reading-reminders" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">New book recommendations</span>
+                            <input type="checkbox" id="notify-recommendations">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">Friend activity</span>
+                            <input type="checkbox" id="notify-friend-activity" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Preferences</h3>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">Public profile</span>
+                            <input type="checkbox" id="pref-public-profile">
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                        <label class="settings-toggle">
+                            <span class="settings-toggle-text">Show reading activity</span>
+                            <input type="checkbox" id="pref-show-activity" checked>
+                            <span class="settings-toggle-slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn btn-primary btn-full" id="save-settings-btn">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Review Modal -->
+        <div id="review-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Rate & Review</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="review-book-info" id="review-book-info">
+                        <!-- Book info will be inserted here -->
+                    </div>
+                    <form id="review-form">
+                        <div class="form-group">
+                            <label>Your Rating</label>
+                            <div class="star-rating" id="star-rating">
+                                <button type="button" class="star" data-rating="1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </button>
+                                <button type="button" class="star" data-rating="2">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </button>
+                                <button type="button" class="star" data-rating="3">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </button>
+                                <button type="button" class="star" data-rating="4">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </button>
+                                <button type="button" class="star" data-rating="5">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                </button>
+                            </div>
+                            <input type="hidden" id="review-rating" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="review-text">Your Review (optional)</label>
+                            <textarea id="review-text" placeholder="What did you think about this book? Would you recommend it?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="review-recommend" checked>
+                                <span>I would recommend this book</span>
+                            </label>
+                        </div>
+                        <div class="review-actions">
+                            <button type="button" class="btn btn-ghost" id="skip-review-btn">Skip for now</button>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Celebration Modal -->
+        <div id="celebration-modal" class="modal celebration-modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm celebration-content">
+                <div class="celebration-animation">
+                    <div class="confetti"></div>
+                    <div class="celebration-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                </div>
+                <h2 class="celebration-title">Congratulations!</h2>
+                <p class="celebration-subtitle" id="celebration-book-title">You finished reading</p>
+                <div class="celebration-stats">
+                    <div class="celebration-stat">
+                        <span class="celebration-stat-value" id="celebration-books-count">0</span>
+                        <span class="celebration-stat-label">Books finished</span>
+                    </div>
+                </div>
+                <p class="celebration-message">Would you like to share your thoughts?</p>
+                <div class="celebration-actions">
+                    <button class="btn btn-ghost" id="celebration-skip">Maybe later</button>
+                    <button class="btn btn-primary" id="celebration-review">Write a Review</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth-service.js"></script>
+    <script type="module" src="js/db-service.js"></script>
+    <script type="module" src="js/book-lookup.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

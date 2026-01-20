@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.build/
+DerivedData/
+
+# Environment/secrets
+.env
+.env.local
+*.p8
+*.p12
+GoogleService-Info.plist
+firebase-debug.log
+
+# IDE
+.idea/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.ipa
+*.app
