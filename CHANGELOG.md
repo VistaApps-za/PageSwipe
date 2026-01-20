@@ -15,6 +15,12 @@ Format: Each entry includes the change description and affected files.
   - Added branch strategy documentation
   - (files: `.claude/agents/project-manager.md`, `.claude/templates/AGENT-SYSTEM-SETUP.md`)
 
+- **Product Designer agent** - Elite strategic advisor for feature planning
+  - Advises on product decisions, UX architecture, best practices
+  - Works with stakeholder and PM during planning BEFORE implementation
+  - Does NOT write code - strategic guidance only
+  - (files: `.claude/agents/product-designer.md`, `.claude/agents/project-manager.md`)
+
 - **Frontend-designer integration for platform agents** - Platform developers now explicitly defer UI work to frontend-designer
   - ios-developer: Added "UI Work Goes to Frontend Designer" section, clarified scope to business logic only
   - web-developer: Added "UI Work Goes to Frontend Designer" section, clarified scope to business logic only

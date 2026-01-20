@@ -185,6 +185,15 @@ Documentation Updated:
 
 ## Specialist Agents
 
+### Product Designer (PRIORITY for planning)
+- `product-designer` - **Elite product/architectural advisor. MUST be involved when planning new features.**
+- Handles: Product strategy, feature decisions, UX architecture, best practices
+- Advises on what to build, what to skip, what works, what doesn't
+- Works with stakeholder and PM during planning BEFORE implementation begins
+- **Does NOT write code** - strategic advisor only
+
+**IMPORTANT:** Before implementing ANY new feature, bring in `product-designer` to advise on approach. They help avoid building the wrong thing.
+
 ### Frontend Designer (PRIORITY for UI work)
 - `frontend-designer` - **Elite UI/UX developer. MUST be used for ANY design or interface work.**
 - Handles: Visual design, layouts, components, animations, styling, user experience
@@ -201,8 +210,24 @@ Documentation Updated:
 
 ### Delegation Rules
 
+**For NEW features (planning phase):**
+1. **New feature request** → `product-designer` FIRST (strategic advice with stakeholder + PM)
+2. After planning approved → proceed to implementation
+
+**For implementation:**
 1. **UI/Design tasks** → `frontend-designer` (handles both iOS and Web UI)
 2. **iOS-only logic** → `ios-developer`
 3. **Web-only logic** → `web-developer`
 4. **Backend/Database** → `firebase-developer`
 5. **Full feature (UI + logic)** → `frontend-designer` for UI, then platform devs for logic
+
+**Planning workflow:**
+```
+Stakeholder request
+       ↓
+Product Designer (advises on approach)
+       ↓
+PM + Stakeholder approve plan
+       ↓
+Implementation agents execute
+```

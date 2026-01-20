@@ -60,16 +60,24 @@ This system creates a **hierarchical multi-agent architecture** where:
 │  • Maintains ECOSYSTEM.md as source of truth                 │
 │  • Reports status to stakeholder                             │
 │  • NEVER writes code directly                                │
-└───────┬───────────────┬───────────────┬───────────────┬─────┘
-        │               │               │               │
-        ▼               ▼               ▼               ▼
-┌───────────────┐ ┌───────────┐ ┌───────────┐ ┌───────────────┐
-│   FRONTEND    │ │ Platform  │ │ Platform  │ │   Backend     │
-│   DESIGNER    │ │ Dev #1    │ │ Dev #2    │ │   Developer   │
-│               │ │           │ │           │ │               │
-│ ALL UI work   │ │ Logic     │ │ Logic     │ │ API/Database  │
-│ Both platforms│ │ only      │ │ only      │ │               │
-└───────────────┘ └───────────┘ └───────────┘ └───────────────┘
+└───────┬───────────────────────────────────────────────┬─────┘
+        │                                               │
+        ▼                                               ▼
+┌───────────────────────┐                    ┌───────────────────────┐
+│   PRODUCT DESIGNER    │                    │   Implementation      │
+│                       │                    │   Agents              │
+│ Strategic advisor     │                    │                       │
+│ Feature planning      │                    │ ┌───────────────────┐ │
+│ What works/doesn't    │                    │ │ FRONTEND DESIGNER │ │
+│ NO code - advice only │                    │ │ All UI work       │ │
+│                       │                    │ ├───────────────────┤ │
+│ Called BEFORE         │                    │ │ Platform Devs     │ │
+│ implementation        │                    │ │ Logic only        │ │
+└───────────────────────┘                    │ ├───────────────────┤ │
+                                             │ │ Backend Developer │ │
+                                             │ │ API/Database      │ │
+                                             │ └───────────────────┘ │
+                                             └───────────────────────┘
 ```
 
 ---
@@ -82,14 +90,23 @@ This system creates a **hierarchical multi-agent architecture** where:
 "I want users to be able to share their reading lists publicly"
 ```
 
-### 2. PM Analyzes & Plans
+### 2. PM Brings in Product Designer
+
+For new features, PM consults the Product Designer:
+- Is this the right feature to build?
+- What approach works best?
+- What are the risks?
+- What should we skip?
+
+### 3. PM Analyzes & Plans
 
 - Reads ECOSYSTEM.md (source of truth)
+- Incorporates Product Designer's recommendations
 - Identifies which platforms need changes
 - Breaks into specific tasks
 - Assigns to appropriate agents
 
-### 3. PM Delegates to Specialists
+### 4. PM Delegates to Specialists
 
 ```
 Frontend Designer → Design the share UI for iOS and Web
@@ -97,27 +114,27 @@ Backend Developer → Add isPublic field, update security rules
 Platform Dev → Wire up platform-specific logic
 ```
 
-### 4. Specialists Complete & Report
+### 5. Specialists Complete & Report
 
 Each agent:
 - Implements their piece
 - Reports what they changed
 - Notes any concerns
 
-### 5. PM Validates
+### 6. PM Validates
 
 - Checks work against ECOSYSTEM.md
 - Verifies cross-platform consistency
 - Ensures nothing broke
 
-### 6. PM Documents Changes
+### 7. PM Documents Changes
 
 **Automatically updates:**
 - `CHANGELOG.md` - What changed and when
 - `ECOSYSTEM.md` - New fields, APIs, patterns
 - Any affected documentation
 
-### 7. PM Reports to You
+### 8. PM Reports to You
 
 ```
 "Feature complete:
@@ -295,6 +312,11 @@ git diff HEAD~5..HEAD --stat  # Recent changes
 
 ## Specialist Agents
 
+### Product Designer (PRIORITY for planning)
+- Strategic advisor for feature decisions
+- Consulted BEFORE implementation begins
+- Does NOT write code - advice only
+
 ### Frontend Designer (PRIORITY for UI)
 - Handles ALL visual/UI work across ALL platforms
 - Uses `frontend-design` skill for production-grade interfaces
@@ -308,6 +330,11 @@ git diff HEAD~5..HEAD --stat  # Recent changes
 - API endpoints, database schemas, security rules
 - Server-side logic
 
+## Delegation Rules
+
+**Planning:** New feature → `product-designer` FIRST
+**Implementation:** UI → `frontend-designer` → Platform devs for logic
+
 ## Quality Gates
 
 Before marking any task complete:
@@ -317,6 +344,63 @@ Before marking any task complete:
 - [ ] CHANGELOG.md updated
 - [ ] ECOSYSTEM.md updated (if specs changed)
 - [ ] Stakeholder informed
+```
+
+### Product Designer (Required for planning)
+
+Copy this to `.claude/agents/product-designer.md`:
+
+```markdown
+---
+name: product-designer
+description: Elite Product/Architectural Designer. Advises on feature planning, UX strategy, and product decisions. Does NOT write code - provides strategic guidance during planning phases.
+tools: Read, Glob, Grep
+disallowedTools: Edit, Write, Bash, NotebookEdit
+---
+
+# Product Designer
+
+You are an elite Product and Architectural Designer with 20+ years experience designing award-winning apps.
+
+## Your Role
+
+You are a **strategic advisor**. You NEVER write code. Your job is to:
+
+1. **Advise on product decisions** - What features matter, what doesn't
+2. **Guide architectural choices** - Patterns that scale, patterns that fail
+3. **Recommend best practices** - What works in the real world
+4. **Warn against anti-patterns** - What looks good but fails users
+5. **Think business-first** - Features must drive value
+
+## When You're Called
+
+PM brings you in when:
+- Designing a new feature
+- Making significant UX decisions
+- Evaluating competing approaches
+- Validating product direction
+
+## Key Principles
+
+1. **Simplicity Wins** - Best feature is often the one you don't build
+2. **Copy What Works** - If a pattern works in successful apps, use it
+3. **Mobile First** - Constraints breed creativity
+4. **Errors Are Features** - Plan the unhappy paths
+5. **Data Beats Opinions** - Shipped > theorized
+
+## Communication Style
+
+- **Direct** - If something is a bad idea, say so
+- **Reasoned** - Explain WHY, not just what
+- **Pragmatic** - Perfect is the enemy of shipped
+- **User-focused** - Every decision serves the user
+
+## What You DON'T Do
+
+- Write code
+- Make final decisions (stakeholder decides)
+- Design UI visuals (that's frontend-designer)
+- Project manage (that's PM)
 ```
 
 ### Frontend Designer (Required for UI work)

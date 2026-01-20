@@ -21,6 +21,7 @@ import {
 
 // Cloud function references
 const discoverBooksFunction = httpsCallable(functions, 'discoverBooks');
+const lookupBookFunction = httpsCallable(functions, 'lookupBook');
 
 // API endpoints (fallback)
 const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
@@ -89,6 +90,7 @@ export async function searchBooks(query, maxResults = 20) {
 
 /**
  * Lookup book by ISBN
+ * Uses Cloud Function which handles enhancement automatically
  * @param {string} isbn - ISBN (10 or 13 digits)
  * @returns {Promise<Object>} - Book data
  */
@@ -100,7 +102,18 @@ export async function lookupByISBN(isbn) {
             return { success: true, data: [cached.data] };
         }
 
-        // Use Google Books API (more reliable, better metadata)
+        // Use Cloud Function (handles enhancement automatically)
+        try {
+            const result = await lookupBookFunction({ isbn });
+            if (result.data?.success && result.data?.book) {
+                const book = result.data.book;
+                return { success: true, data: [book] };
+            }
+        } catch (cloudError) {
+            console.warn('Cloud Function lookup failed, using fallback:', cloudError);
+        }
+
+        // Fallback to direct Google Books API with client-side enhancement
         const googleResult = await fetchFromGoogleBooks(isbn);
         if (googleResult.success) {
             const book = googleResult.data;

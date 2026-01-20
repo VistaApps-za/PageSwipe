@@ -530,6 +530,206 @@ function applyPreferenceScoring(books, preferences) {
 // =============================================================================
 
 /**
+ * Validate Open Library cover image
+ * Returns the cover URL if valid, null if 404 or placeholder
+ */
+async function validateOpenLibraryCover(isbn) {
+  const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    if (!response.ok) return null;
+
+    // Check content-length - placeholder images are very small (<1KB)
+    const size = response.headers.get("content-length");
+    if (size && parseInt(size) < 1000) return null;
+
+    return url;
+  } catch (error) {
+    console.log("Cover validation failed:", error.message);
+    return null;
+  }
+}
+
+/**
+ * Normalize a title for comparison
+ * Removes subtitles, common words, and normalizes whitespace
+ */
+function normalizeTitle(title) {
+  if (!title) return "";
+  return title
+    .toLowerCase()
+    .replace(/[:\-–—]/g, " ")  // Replace separators with spaces
+    .replace(/\s+/g, " ")       // Normalize whitespace
+    .replace(/\b(the|a|an)\b/g, "") // Remove common articles
+    .trim();
+}
+
+/**
+ * Calculate simple Levenshtein distance between two strings
+ */
+function levenshteinDistance(a, b) {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Check if two titles match (fuzzy comparison)
+ */
+function titlesMatch(titleA, titleB) {
+  if (!titleA || !titleB) return false;
+
+  const na = normalizeTitle(titleA);
+  const nb = normalizeTitle(titleB);
+
+  // Substring match
+  if (na.includes(nb) || nb.includes(na)) return true;
+
+  // Fuzzy match - allow up to 30% character difference
+  const maxDistance = Math.min(na.length, nb.length) * 0.3;
+  return levenshteinDistance(na, nb) <= maxDistance;
+}
+
+/**
+ * Score a Google Books edition by metadata quality
+ */
+function scoreEdition(item, originalTitle) {
+  const info = item.volumeInfo || {};
+  let score = 0;
+
+  // Title must match
+  if (!titlesMatch(info.title, originalTitle)) {
+    return { score: 0 };
+  }
+
+  // Score metadata completeness
+  const hasCover = info.imageLinks?.thumbnail;
+  const hasDescription = info.description && info.description.length > 50;
+  const hasPageCount = info.pageCount && info.pageCount > 0;
+  const hasRatings = info.ratingsCount && info.ratingsCount > 0;
+
+  if (hasCover) score += 2;
+  if (hasDescription) score += 2;
+  if (hasPageCount) score += 1;
+  if (hasRatings) score += 1;
+
+  return {
+    score,
+    coverImageUrl: hasCover
+      ? info.imageLinks.thumbnail.replace("http:", "https:")
+      : null,
+    description: hasDescription ? info.description : null,
+    pageCount: info.pageCount || null,
+    averageRating: info.averageRating || null,
+    ratingsCount: info.ratingsCount || null
+  };
+}
+
+/**
+ * Enhance book data by searching for better editions with cover/description
+ * Preserves the original ISBN while filling in missing metadata
+ */
+async function enhanceBookData(book, originalIsbn) {
+  // Skip if we already have both cover and description
+  if (book.coverImageUrl && book.description) {
+    return book;
+  }
+
+  // Need a title to search
+  if (!book.title) {
+    return book;
+  }
+
+  console.log(`🔍 Enhancing book: "${book.title}" (missing: ${!book.coverImageUrl ? 'cover' : ''} ${!book.description ? 'description' : ''})`);
+
+  try {
+    // Build precise search query using intitle: and inauthor: modifiers
+    let query = `intitle:${book.title}`;
+    if (book.authors && book.authors.length > 0) {
+      query += ` inauthor:${book.authors[0]}`;
+    }
+
+    const encodedQuery = encodeURIComponent(query);
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodedQuery}&maxResults=10&printType=books`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.log("Enhancement search failed:", response.status);
+      return book;
+    }
+
+    const data = await response.json();
+    if (!data.items || data.items.length === 0) {
+      console.log("No enhancement candidates found");
+      return book;
+    }
+
+    // Score and rank all candidates
+    const candidates = data.items
+      .map(item => scoreEdition(item, book.title))
+      .filter(c => c.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (candidates.length === 0) {
+      console.log("No matching editions found");
+      return book;
+    }
+
+    // Find best cover and best description (may be from different editions)
+    let bestCover = null;
+    let bestDescription = null;
+
+    for (const candidate of candidates) {
+      if (!bestCover && candidate.coverImageUrl) {
+        bestCover = candidate.coverImageUrl;
+      }
+      if (!bestDescription && candidate.description) {
+        bestDescription = candidate.description;
+      }
+      // Stop once we have both
+      if (bestCover && bestDescription) break;
+    }
+
+    // Merge enhanced data into original book
+    const enhanced = {
+      ...book,
+      isbn: originalIsbn,  // Always preserve original ISBN
+      coverImageUrl: book.coverImageUrl || bestCover,
+      description: book.description || bestDescription
+    };
+
+    console.log(`✅ Enhanced: cover=${!!enhanced.coverImageUrl}, description=${!!enhanced.description}`);
+    return enhanced;
+  } catch (error) {
+    console.error("Enhancement error:", error);
+    return book;
+  }
+}
+
+/**
  * Look up book by ISBN using Open Library and Google Books APIs
  * Caches results in Firestore for faster subsequent lookups
  */
@@ -559,8 +759,10 @@ exports.lookupBook = onCall(async (request) => {
 
   // Try Open Library API (free, no key required)
   try {
-    const book = await fetchFromOpenLibrary(cleanIsbn);
+    let book = await fetchFromOpenLibrary(cleanIsbn);
     if (book) {
+      // Enhance if missing cover or description
+      book = await enhanceBookData(book, cleanIsbn);
       await cacheBook(book);
       return { success: true, book, source: "openLibrary" };
     }
@@ -570,8 +772,10 @@ exports.lookupBook = onCall(async (request) => {
 
   // Fallback to Google Books API
   try {
-    const book = await fetchFromGoogleBooks(cleanIsbn);
+    let book = await fetchFromGoogleBooks(cleanIsbn);
     if (book) {
+      // Enhance if missing cover or description
+      book = await enhanceBookData(book, cleanIsbn);
       await cacheBook(book);
       return { success: true, book, source: "googleBooks" };
     }
@@ -612,12 +816,15 @@ async function fetchFromOpenLibrary(isbn) {
     authors = (await Promise.all(authorPromises)).filter(Boolean);
   }
 
+  // Validate cover image - Open Library may return 404 or placeholder
+  const coverImageUrl = await validateOpenLibraryCover(isbn);
+
   return {
     isbn: isbn,
     isbn13: isbn.length === 13 ? isbn : null,
     title: data.title,
     authors: authors,
-    coverImageUrl: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`,
+    coverImageUrl: coverImageUrl,
     description: typeof data.description === "string"
       ? data.description
       : data.description?.value || null,
