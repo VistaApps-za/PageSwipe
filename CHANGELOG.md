@@ -4,6 +4,8 @@ All notable changes to the PageSwipe project are documented in this file.
 
 Format: Each entry includes the change description and affected files.
 
+**For planned features, see [ROADMAP.md](./ROADMAP.md)**
+
 ---
 
 ## [2026-01-20]
@@ -34,11 +36,13 @@ Format: Each entry includes the change description and affected files.
   - `firebase-developer.md` - Backend/Cloud Functions specialist
   - (files: `.claude/agents/`)
 
-- **ISBN metadata enhancement for iOS** - When barcode scan returns sparse data, system now searches by title+author to find better cover/description
-  - Added `enhanceBookData(book:originalIsbn:)` method
-  - Integrated into `lookupBook(isbn:)` and `lookupDirectly(isbn:)`
-  - Matches existing Web implementation
-  - (files: `PageSwipe/PageSwipe/Services/BookLookupService.swift`)
+- **ISBN metadata enhancement (Cloud Function)** - Centralized book metadata enhancement for better cover images and descriptions
+  - Added `enhanceBookData()` to Cloud Function - searches Google Books by title+author when initial lookup returns sparse data
+  - Added `validateOpenLibraryCover()` - validates cover images, detects 404s and placeholders
+  - Added `titlesMatch()` with fuzzy matching (Levenshtein distance) for better edition matching
+  - Added `scoreEdition()` - ranks editions by metadata completeness (+2 cover, +2 description, +1 pageCount, +1 ratings)
+  - iOS and Web now rely on Cloud Function for enhancement (client-side kept as fallback)
+  - (files: `functions/index.js`, `PageSwipe/PageSwipe/Services/BookLookupService.swift`, `PageSwipe Web/js/book-lookup.js`)
 
 - **Premium feature gating on Web** - Free users now blocked from creating custom lists and clubs at UI level
   - Added `canCreateList()` and `canCreateClub()` functions

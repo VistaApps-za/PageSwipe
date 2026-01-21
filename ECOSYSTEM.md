@@ -226,10 +226,17 @@ interface BookItem {
   finishedReadingAt: Timestamp | null;
   addedAt: Timestamp;
   updatedAt: Timestamp;
+
+  // Ownership fields (for My Library feature)
+  isOwned: boolean;              // true if user physically owns this book
+  ownedFormat: OwnedFormat | null; // 'physical' | 'ebook' | 'audiobook' | null
+  ownedAt: Timestamp | null;     // when ownership was recorded
 }
 
 type ReadingStatus = 'unread' | 'reading' | 'read' | 'notInterested';
 ```
+
+> **Note:** "My Books" is a filtered view of BookItems where `isOwned == true`. It is not a separate collection or list type.
 
 ### Club
 
@@ -390,6 +397,11 @@ type ListType = 'toRead' | 'completed' | 'custom';
 ### ReadingStatus
 ```typescript
 type ReadingStatus = 'unread' | 'reading' | 'read' | 'notInterested';
+```
+
+### OwnedFormat
+```typescript
+type OwnedFormat = 'physical' | 'ebook' | 'audiobook';
 ```
 
 ### InteractionType (for preference scoring)
@@ -839,6 +851,7 @@ firestore.rules                   # Security rules
 | 2026-01-20 | 1.0.0 | Initial ecosystem specification |
 | 2026-01-20 | 1.1.0 | Added background preloading documentation for iOS and Web |
 | 2026-01-20 | 1.2.0 | Removed "Currently Reading" as default list - now handled via ReadingStatus |
+| 2026-01-21 | 1.3.0 | Added ownership fields to BookItem (isOwned, ownedFormat, ownedAt) for My Library feature |
 
 ---
 

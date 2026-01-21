@@ -22,7 +22,8 @@ import {
     serverTimestamp,
     increment,
     writeBatch,
-    arrayUnion
+    arrayUnion,
+    deleteField
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 import {
     ref,
@@ -43,7 +44,9 @@ import {
  */
 const PREMIUM_LIMITS = {
     FREE_CUSTOM_LISTS: 0,  // Free users get 0 custom lists
-    FREE_CAN_CREATE_CLUBS: false  // Free users cannot create clubs
+    FREE_CAN_CREATE_CLUBS: false,  // Free users cannot create clubs
+    FREE_LIBRARY_LIMIT: 50,  // Free users can have max 50 books in My Library
+    FREE_LIBRARY_WARNING_THRESHOLD: 40  // Show warning at 40 books
 };
 
 /**
@@ -133,6 +136,88 @@ export async function canCreateClub(userId) {
         console.error('Can create club error:', error);
         return { allowed: false, reason: error.message, isPro: false };
     }
+}
+
+/**
+ * Check if user can add more books to their library (My Books)
+ * Free users: 50 books maximum
+ * Pro users: Unlimited books
+ * @param {string} userId - User ID
+ * @returns {Promise<{canAdd: boolean, currentCount: number, limit: number, isPro: boolean, showWarning: boolean}>}
+ */
+export async function canAddToLibrary(userId) {
+    if (!userId) {
+        return {
+            canAdd: false,
+            currentCount: 0,
+            limit: PREMIUM_LIMITS.FREE_LIBRARY_LIMIT,
+            isPro: false,
+            showWarning: false,
+            reason: 'Not authenticated'
+        };
+    }
+
+    try {
+        const isPro = await checkIsPremium(userId);
+
+        // Pro users can add unlimited books
+        if (isPro) {
+            return {
+                canAdd: true,
+                currentCount: 0,
+                limit: Infinity,
+                isPro: true,
+                showWarning: false
+            };
+        }
+
+        // Get current owned books count for free users
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isOwned', '==', true)
+        );
+        const snapshot = await getDocs(q);
+        const currentCount = snapshot.size;
+
+        const atLimit = currentCount >= PREMIUM_LIMITS.FREE_LIBRARY_LIMIT;
+        const showWarning = currentCount >= PREMIUM_LIMITS.FREE_LIBRARY_WARNING_THRESHOLD;
+
+        return {
+            canAdd: !atLimit,
+            currentCount: currentCount,
+            limit: PREMIUM_LIMITS.FREE_LIBRARY_LIMIT,
+            isPro: false,
+            showWarning: showWarning,
+            reason: atLimit ? 'Library full. Upgrade to Pro for unlimited books.' : undefined
+        };
+    } catch (error) {
+        console.error('Can add to library error:', error);
+        return {
+            canAdd: false,
+            currentCount: 0,
+            limit: PREMIUM_LIMITS.FREE_LIBRARY_LIMIT,
+            isPro: false,
+            showWarning: false,
+            reason: error.message
+        };
+    }
+}
+
+/**
+ * Get library limit info for display purposes
+ * @param {string} userId - User ID
+ * @returns {Promise<{currentCount: number, limit: number, isPro: boolean, showWarning: boolean, remaining: number}>}
+ */
+export async function getLibraryLimitInfo(userId) {
+    const result = await canAddToLibrary(userId);
+    return {
+        currentCount: result.currentCount,
+        limit: result.limit,
+        isPro: result.isPro,
+        showWarning: result.showWarning,
+        remaining: result.isPro ? Infinity : Math.max(0, result.limit - result.currentCount)
+    };
 }
 
 // ============================================
@@ -483,6 +568,10 @@ export async function addBookToList(bookData, listId, userId) {
             currentPage: null,
             startedReadingAt: null,
             finishedReadingAt: null,
+            // Ownership fields (matches iOS BookItem)
+            isOwned: false,
+            ownedFormat: null,
+            ownedAt: null,
             addedAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         };
@@ -567,6 +656,168 @@ export async function updateReadingProgress(itemId, currentPage) {
         return { success: true };
     } catch (error) {
         console.error('Update reading progress error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============================================
+// BOOK OWNERSHIP (My Library)
+// ============================================
+
+/**
+ * Mark a book item as owned
+ * Checks library limit for free users before marking
+ * @param {string} itemId - The item document ID
+ * @param {string} format - 'physical' | 'ebook' | 'audiobook'
+ * @param {string} userId - User ID (required for limit check)
+ * @returns {Promise<{success: boolean, error?: string, limitReached?: boolean}>}
+ */
+export async function markAsOwned(itemId, format, userId) {
+    try {
+        // Validate format
+        const validFormats = ['physical', 'ebook', 'audiobook'];
+        if (!validFormats.includes(format)) {
+            return { success: false, error: 'Invalid format. Must be physical, ebook, or audiobook.' };
+        }
+
+        // Check library limit if userId provided
+        if (userId) {
+            const limitCheck = await canAddToLibrary(userId);
+            if (!limitCheck.canAdd) {
+                return {
+                    success: false,
+                    error: limitCheck.reason || 'Library full. Upgrade to Pro for unlimited books.',
+                    limitReached: true,
+                    currentCount: limitCheck.currentCount,
+                    limit: limitCheck.limit
+                };
+            }
+        }
+
+        await updateDoc(doc(db, 'items', itemId), {
+            isOwned: true,
+            ownedFormat: format,
+            ownedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        return { success: true };
+    } catch (error) {
+        console.error('Mark as owned error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Remove ownership from a book item
+ * @param {string} itemId - The item document ID
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function removeOwnership(itemId) {
+    try {
+        await updateDoc(doc(db, 'items', itemId), {
+            isOwned: false,
+            ownedFormat: deleteField(),
+            ownedAt: deleteField(),
+            updatedAt: serverTimestamp()
+        });
+        return { success: true };
+    } catch (error) {
+        console.error('Remove ownership error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get all owned books for current user
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, data?: Array, error?: string}>}
+ */
+export async function getOwnedBooks(userId) {
+    try {
+        if (!userId) {
+            return { success: false, error: 'User ID required' };
+        }
+
+        // Query items where user owns the book
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isOwned', '==', true)
+        );
+        const snapshot = await getDocs(q);
+        let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort by ownedAt descending (newest first)
+        items.sort((a, b) => {
+            const dateA = a.ownedAt?.toDate?.() || a.ownedAt || new Date(0);
+            const dateB = b.ownedAt?.toDate?.() || b.ownedAt || new Date(0);
+            return dateB - dateA;
+        });
+
+        return { success: true, data: items };
+    } catch (error) {
+        console.error('Get owned books error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get count of owned books for current user
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, data?: number, error?: string}>}
+ */
+export async function getOwnedBooksCount(userId) {
+    try {
+        if (!userId) {
+            return { success: false, error: 'User ID required' };
+        }
+
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isOwned', '==', true)
+        );
+        const snapshot = await getDocs(q);
+        return { success: true, data: snapshot.size };
+    } catch (error) {
+        console.error('Get owned books count error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Check if user owns a book by ISBN
+ * @param {string} userId - User ID
+ * @param {string} isbn - The book ISBN
+ * @returns {Promise<{success: boolean, data?: Object|null, error?: string}>}
+ */
+export async function checkIfOwned(userId, isbn) {
+    try {
+        if (!userId) {
+            return { success: false, error: 'User ID required' };
+        }
+        if (!isbn) {
+            return { success: false, error: 'ISBN required' };
+        }
+
+        // Query items where user owns the book with this ISBN
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isbn', '==', isbn),
+            where('isOwned', '==', true),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, data: null };
+        }
+
+        const itemDoc = snapshot.docs[0];
+        return { success: true, data: { id: itemDoc.id, ...itemDoc.data() } };
+    } catch (error) {
+        console.error('Check if owned error:', error);
         return { success: false, error: error.message };
     }
 }
@@ -2086,6 +2337,239 @@ export async function getBookItem(itemId) {
         return { success: false, error: 'Book not found' };
     } catch (error) {
         console.error('Get book item error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// ============================================
+// REFETCH BOOK COVER
+// ============================================
+
+/**
+ * Normalize a title for fuzzy matching
+ * Removes punctuation, extra spaces, and converts to lowercase
+ * @param {string} title - Title to normalize
+ * @returns {string} Normalized title
+ */
+function normalizeTitle(title) {
+    if (!title) return '';
+    return title
+        .toLowerCase()
+        .replace(/[^\w\s]/g, '')  // Remove punctuation
+        .replace(/\s+/g, ' ')      // Collapse whitespace
+        .trim();
+}
+
+/**
+ * Calculate Levenshtein distance between two strings
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {number} Edit distance
+ */
+function levenshteinDistance(a, b) {
+    if (!a || !b) return Math.max(a?.length || 0, b?.length || 0);
+
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Check if two titles match using fuzzy matching
+ * Uses containment check or Levenshtein distance < 30% of title length
+ * @param {string} targetTitle - The title we're looking for
+ * @param {string} candidateTitle - The title to compare against
+ * @returns {boolean} Whether titles match
+ */
+function titlesMatch(targetTitle, candidateTitle) {
+    const normalizedTarget = normalizeTitle(targetTitle);
+    const normalizedCandidate = normalizeTitle(candidateTitle);
+
+    if (!normalizedTarget || !normalizedCandidate) return false;
+
+    // Exact match
+    if (normalizedTarget === normalizedCandidate) return true;
+
+    // Containment check (one contains the other)
+    if (normalizedTarget.includes(normalizedCandidate) ||
+        normalizedCandidate.includes(normalizedTarget)) {
+        return true;
+    }
+
+    // Levenshtein distance < 30% of the longer title's length
+    const maxLen = Math.max(normalizedTarget.length, normalizedCandidate.length);
+    const distance = levenshteinDistance(normalizedTarget, normalizedCandidate);
+    const threshold = maxLen * 0.3;
+
+    return distance < threshold;
+}
+
+/**
+ * Score a Google Books result by metadata completeness
+ * Scoring: cover +2, description +2, pageCount +1, ratings +1
+ * @param {Object} volumeInfo - Google Books volumeInfo object
+ * @returns {number} Score (0-6)
+ */
+function scoreBookResult(volumeInfo) {
+    let score = 0;
+
+    // Cover image (+2)
+    if (volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail) {
+        score += 2;
+    }
+
+    // Description (+2)
+    if (volumeInfo.description) {
+        score += 2;
+    }
+
+    // Page count (+1)
+    if (volumeInfo.pageCount) {
+        score += 1;
+    }
+
+    // Ratings (+1)
+    if (volumeInfo.ratingsCount || volumeInfo.averageRating) {
+        score += 1;
+    }
+
+    return score;
+}
+
+/**
+ * Refetch a better cover image for a book item
+ * Searches Google Books API and finds the best matching result
+ * @param {string} itemId - The item document ID
+ * @returns {Promise<{success: boolean, data?: string, error?: string}>} Best cover URL or null
+ */
+export async function refetchBookCover(itemId) {
+    try {
+        // Get the item to extract title and authors
+        const itemDoc = await getDoc(doc(db, 'items', itemId));
+        if (!itemDoc.exists()) {
+            return { success: false, error: 'Book item not found' };
+        }
+
+        const itemData = itemDoc.data();
+        const title = itemData.title;
+        const authors = itemData.authors || [];
+
+        if (!title) {
+            return { success: false, error: 'Book has no title' };
+        }
+
+        // Build search query
+        let query = `intitle:${encodeURIComponent(title)}`;
+        if (authors.length > 0) {
+            query += `+inauthor:${encodeURIComponent(authors[0])}`;
+        }
+
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=15`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            return { success: false, error: 'Failed to search Google Books' };
+        }
+
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            return { success: false, error: 'No results found' };
+        }
+
+        // Find the best matching result
+        let bestResult = null;
+        let bestScore = -1;
+
+        for (const item of data.items) {
+            const volumeInfo = item.volumeInfo;
+            if (!volumeInfo) continue;
+
+            // Check if title matches using fuzzy matching
+            if (!titlesMatch(title, volumeInfo.title)) {
+                continue;
+            }
+
+            // Skip if no cover image
+            if (!volumeInfo.imageLinks?.thumbnail && !volumeInfo.imageLinks?.smallThumbnail) {
+                continue;
+            }
+
+            // Score this result
+            const score = scoreBookResult(volumeInfo);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestResult = volumeInfo;
+            }
+        }
+
+        if (!bestResult) {
+            return { success: false, error: 'No matching results with cover found' };
+        }
+
+        // Get the best cover URL (prefer larger image)
+        let coverUrl = bestResult.imageLinks.thumbnail || bestResult.imageLinks.smallThumbnail;
+
+        // Convert to HTTPS and use higher resolution
+        if (coverUrl) {
+            coverUrl = coverUrl.replace('http:', 'https:');
+            coverUrl = coverUrl.replace('zoom=1', 'zoom=2');
+        }
+
+        return { success: true, data: coverUrl };
+
+    } catch (error) {
+        console.error('Refetch book cover error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Update the cover image URL for a book item
+ * @param {string} itemId - The item document ID
+ * @param {string} coverUrl - The new cover image URL
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function updateBookCover(itemId, coverUrl) {
+    try {
+        if (!itemId) {
+            return { success: false, error: 'Item ID required' };
+        }
+
+        if (!coverUrl) {
+            return { success: false, error: 'Cover URL required' };
+        }
+
+        await updateDoc(doc(db, 'items', itemId), {
+            coverImageUrl: coverUrl,
+            updatedAt: serverTimestamp()
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error('Update book cover error:', error);
         return { success: false, error: error.message };
     }
 }

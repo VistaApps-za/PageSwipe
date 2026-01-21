@@ -17,6 +17,20 @@
       "predeploy": []
     }
   ],
+  "hosting": {
+    "public": "PageSwipe Web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "storage": {
     "rules": "storage.rules"
   }

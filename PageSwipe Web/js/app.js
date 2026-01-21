@@ -55,7 +55,15 @@ import {
     uploadProfilePhoto,
     removeProfilePhoto,
     canCreateList,
-    canCreateClub
+    canCreateClub,
+    getOwnedBooks,
+    markAsOwned,
+    removeOwnership,
+    getOwnedBooksCount,
+    canAddToLibrary,
+    getLibraryLimitInfo,
+    refetchBookCover,
+    updateBookCover
 } from './db-service.js';
 
 import {
@@ -92,7 +100,20 @@ const state = {
     finishingBook: null,  // Book being finished (for review flow)
     currentRating: 0,     // Current star rating selection
     selectedGenre: 'random',  // Selected genre for discovery (uses cloud function IDs)
-    seenISBNs: []         // Track seen ISBNs to avoid duplicates
+    seenISBNs: [],         // Track seen ISBNs to avoid duplicates
+    // My Books state
+    ownedBooks: [],
+    ownedBooksFilter: 'all',  // 'all', 'read', 'unread'
+    ownedBooksSearch: '',
+    libraryTab: 'my-books',   // 'my-books' or 'reading-lists'
+    // Library limit state (freemium)
+    libraryLimitInfo: {
+        currentCount: 0,
+        limit: 50,
+        isPro: false,
+        showWarning: false,
+        remaining: 50
+    }
 };
 
 // ============================================
@@ -144,6 +165,14 @@ const elements = {
     listDetailTitle: document.getElementById('list-detail-title'),
     listDetailCount: document.getElementById('list-detail-count'),
     listBooks: document.getElementById('list-books'),
+
+    // My Books
+    myBooksGrid: document.getElementById('my-books-grid'),
+    myBooksCount: document.getElementById('my-books-count'),
+    myBooksSearch: document.getElementById('my-books-search'),
+    myBooksEmpty: document.getElementById('my-books-empty'),
+    myBooksTab: document.getElementById('my-books-tab'),
+    readingListsTab: document.getElementById('reading-lists-tab'),
 
     // Clubs
     clubsGrid: document.getElementById('clubs-grid'),
@@ -491,6 +520,66 @@ function initEventListeners() {
     });
     elements.starRating.addEventListener('mouseleave', () => {
         highlightStars(state.currentRating);
+    });
+
+    // My Books - Library Tabs
+    document.querySelectorAll('.library-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            switchLibraryTab(tabName);
+        });
+    });
+
+    // My Books - Filter Chips
+    document.querySelectorAll('.my-books-filters .filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const filter = chip.dataset.filter;
+            setMyBooksFilter(filter);
+        });
+    });
+
+    // My Books - Search
+    if (elements.myBooksSearch) {
+        elements.myBooksSearch.addEventListener('input', (e) => {
+            state.ownedBooksSearch = e.target.value.toLowerCase();
+            renderMyBooks();
+        });
+    }
+
+    // My Books - Add First Book button
+    document.getElementById('add-first-book-btn')?.addEventListener('click', () => {
+        openModal('add-book-modal');
+    });
+
+    // Library Limit Warning - Upgrade link
+    document.getElementById('library-limit-upgrade-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        // TODO: Navigate to upgrade/paywall when implemented
+        showToast('Upgrade feature coming soon!', 'info');
+    });
+
+    // Library Limit Modal - Buttons
+    document.getElementById('library-limit-upgrade-btn')?.addEventListener('click', () => {
+        closeAllModals();
+        // TODO: Navigate to upgrade/paywall when implemented
+        showToast('Upgrade feature coming soon!', 'info');
+    });
+    document.getElementById('library-limit-dismiss-btn')?.addEventListener('click', () => {
+        closeAllModals();
+    });
+
+    // Book Detail Modal - Add to Library button
+    document.getElementById('add-to-library-btn')?.addEventListener('click', () => {
+        const formatPicker = document.getElementById('ownership-format-picker');
+        if (formatPicker) {
+            formatPicker.classList.add('active');
+        }
+    });
+
+    // Book Detail Modal - Confirm Add to Library
+    document.getElementById('confirm-add-to-library')?.addEventListener('click', () => {
+        const selectedFormat = document.querySelector('.format-option.selected')?.dataset.format || 'physical';
+        window.confirmAddToLibrary(selectedFormat);
     });
 }
 
@@ -881,6 +970,7 @@ async function loadHomeData() {
 async function loadLibraryData() {
     if (!state.user) return;
 
+    // Load reading lists
     const ownerName = state.userProfile?.displayName || state.user.displayName || state.user.email;
     const result = await getUserLists(state.user.uid, ownerName);
     if (result.success) {
@@ -888,6 +978,25 @@ async function loadLibraryData() {
         renderLists();
         populateSwipeListDropdown();
     }
+
+    // Load owned books
+    await loadMyBooks();
+}
+
+async function loadMyBooks() {
+    if (!state.user) return;
+
+    // Load owned books
+    const result = await getOwnedBooks(state.user.uid);
+    if (result.success) {
+        state.ownedBooks = result.data;
+    }
+
+    // Load library limit info for freemium
+    const limitInfo = await getLibraryLimitInfo(state.user.uid);
+    state.libraryLimitInfo = limitInfo;
+
+    renderMyBooks();
 }
 
 async function loadClubsData() {
@@ -1705,6 +1814,395 @@ function renderLists() {
         card.addEventListener('click', () => loadListDetail(card.dataset.id));
     });
 }
+
+// ============================================
+// MY BOOKS FUNCTIONS
+// ============================================
+
+function switchLibraryTab(tabName) {
+    state.libraryTab = tabName;
+
+    // Update tab buttons
+    document.querySelectorAll('.library-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Update tab content
+    document.querySelectorAll('.library-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    if (tabName === 'my-books') {
+        elements.myBooksTab?.classList.add('active');
+    } else {
+        elements.readingListsTab?.classList.add('active');
+    }
+}
+
+function setMyBooksFilter(filter) {
+    state.ownedBooksFilter = filter;
+
+    // Update filter buttons
+    document.querySelectorAll('.my-books-filters .filter-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.filter === filter);
+    });
+
+    renderMyBooks();
+}
+
+function getFilteredOwnedBooks() {
+    let books = [...state.ownedBooks];
+
+    // Apply search filter
+    if (state.ownedBooksSearch) {
+        const search = state.ownedBooksSearch.toLowerCase();
+        books = books.filter(book =>
+            book.title?.toLowerCase().includes(search) ||
+            book.authors?.some(a => a.toLowerCase().includes(search))
+        );
+    }
+
+    // Apply read/unread filter based on status field
+    if (state.ownedBooksFilter === 'read') {
+        books = books.filter(book => book.status === 'read' || book.status === 'finished');
+    } else if (state.ownedBooksFilter === 'unread') {
+        books = books.filter(book => book.status !== 'read' && book.status !== 'finished');
+    }
+
+    return books;
+}
+
+function renderMyBooks() {
+    const filteredBooks = getFilteredOwnedBooks();
+
+    // Update count
+    if (elements.myBooksCount) {
+        elements.myBooksCount.textContent = pluralize(state.ownedBooks.length, 'book');
+    }
+
+    // Show/hide library limit warning banner
+    updateLibraryLimitWarning();
+
+    // Check if empty
+    if (state.ownedBooks.length === 0) {
+        if (elements.myBooksGrid) elements.myBooksGrid.innerHTML = '';
+        if (elements.myBooksEmpty) elements.myBooksEmpty.style.display = 'block';
+        return;
+    }
+
+    // Hide empty state
+    if (elements.myBooksEmpty) elements.myBooksEmpty.style.display = 'none';
+
+    // Render filtered books
+    if (filteredBooks.length === 0) {
+        if (elements.myBooksGrid) {
+            elements.myBooksGrid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <p>No books match your search</p>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    if (elements.myBooksGrid) {
+        elements.myBooksGrid.innerHTML = filteredBooks.map(book => createMyBookCard(book)).join('');
+
+        // Add click handlers
+        elements.myBooksGrid.querySelectorAll('.my-book-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const bookId = card.dataset.id;
+                openOwnedBookDetail(bookId);
+            });
+        });
+    }
+}
+
+/**
+ * Update the library limit warning banner visibility and text
+ */
+function updateLibraryLimitWarning() {
+    const warningEl = document.getElementById('library-limit-warning');
+    const countEl = document.getElementById('library-limit-warning-count');
+
+    if (!warningEl) return;
+
+    const { currentCount, limit, isPro, showWarning } = state.libraryLimitInfo;
+
+    // Hide for Pro users or if under warning threshold
+    if (isPro || !showWarning) {
+        warningEl.style.display = 'none';
+        return;
+    }
+
+    // Show warning and update text
+    warningEl.style.display = 'flex';
+    if (countEl) {
+        countEl.textContent = `You have ${currentCount} of ${limit} free books.`;
+    }
+}
+
+/**
+ * Show the library limit reached modal
+ */
+function showLibraryLimitModal() {
+    openModal('library-limit-modal');
+}
+
+/**
+ * Check if user can add to library and show modal if at limit
+ * @returns {Promise<boolean>} true if can add, false if at limit
+ */
+async function checkLibraryLimitBeforeAdd() {
+    if (!state.user) return false;
+
+    const limitCheck = await canAddToLibrary(state.user.uid);
+
+    if (!limitCheck.canAdd) {
+        showLibraryLimitModal();
+        return false;
+    }
+
+    return true;
+}
+
+function createMyBookCard(book) {
+    // Determine status badge based on reading status
+    let statusClass = 'unread';
+    let statusLabel = 'Unread';
+    if (book.status === 'read' || book.status === 'finished') {
+        statusClass = 'read';
+        statusLabel = 'Read';
+    } else if (book.status === 'reading') {
+        statusClass = 'reading';
+        statusLabel = 'Reading';
+    }
+
+    // Get format icon - use ownedFormat from db
+    const format = book.ownedFormat || 'physical';
+    const formatIcon = getFormatIcon(format);
+
+    return `
+        <div class="my-book-card" data-id="${book.id}">
+            <div class="my-book-card-cover">
+                ${book.coverImageUrl
+                    ? `<img src="${book.coverImageUrl}" alt="${book.title}">`
+                    : `<div class="my-book-card-cover-text">${book.title}</div>`}
+                <span class="my-book-status-badge ${statusClass}">${statusLabel}</span>
+                <div class="my-book-format-badge">${formatIcon}</div>
+            </div>
+            <div class="my-book-card-info">
+                <h4 class="my-book-card-title">${book.title}</h4>
+                <p class="my-book-card-author">${book.authors?.join(', ') || 'Unknown Author'}</p>
+            </div>
+        </div>
+    `;
+}
+
+function getFormatIcon(format) {
+    switch (format) {
+        case 'ebook':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>`;
+        case 'audiobook':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`;
+        case 'physical':
+        default:
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+    }
+}
+
+async function openOwnedBookDetail(bookId) {
+    const book = state.ownedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    // Format the date nicely - use ownedAt field
+    const addedDate = book.ownedAt?.toDate ? book.ownedAt.toDate() : (book.createdAt?.toDate ? book.createdAt.toDate() : new Date());
+    const dateStr = addedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Get format display name - use ownedFormat field
+    const formatNames = {
+        physical: 'Physical Book',
+        ebook: 'E-Book',
+        audiobook: 'Audiobook'
+    };
+    const formatName = formatNames[book.ownedFormat] || 'Physical Book';
+
+    // Determine if book is read
+    const isRead = book.status === 'read' || book.status === 'finished';
+
+    elements.libraryBookContent.innerHTML = `
+        <div class="book-detail-grid">
+            <div class="book-detail-cover">
+                ${book.coverImageUrl
+                    ? `<img src="${book.coverImageUrl}" alt="${book.title}">`
+                    : `<div class="book-cover-placeholder">${book.title}</div>`}
+            </div>
+            <div class="book-detail-info">
+                <h2 class="book-detail-title">${book.title}</h2>
+                <p class="book-detail-author">by ${book.authors?.join(', ') || 'Unknown Author'}</p>
+                ${book.genre ? `<span class="book-detail-genre">${book.genre}</span>` : ''}
+                <div class="book-detail-meta">
+                    ${book.pageCount ? `<span>Pages: ${book.pageCount}</span>` : ''}
+                    ${book.isbn ? `<span>ISBN: ${book.isbn}</span>` : ''}
+                </div>
+                ${book.description ? `<p class="book-detail-desc">${book.description}</p>` : ''}
+
+                <!-- Ownership Section -->
+                <div class="book-ownership-section">
+                    <div class="ownership-status">
+                        <div class="ownership-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            In Your Library
+                        </div>
+                        <div class="ownership-info">
+                            <div class="ownership-info-format">${formatName}</div>
+                            <div class="ownership-info-date">Added ${dateStr}</div>
+                        </div>
+                        <button class="ownership-remove-btn" onclick="removeFromLibrary('${book.id}')">Remove</button>
+                    </div>
+                </div>
+
+                <div class="book-detail-actions" style="margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="toggleReadStatus('${book.id}', ${isRead ? 'false' : 'true'})">
+                        ${isRead ? 'Mark as Unread' : 'Mark as Read'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    openModal('library-book-modal');
+}
+
+// Global functions for onclick handlers
+window.removeFromLibrary = async function(bookId) {
+    if (!state.user || !bookId) return;
+
+    if (!confirm('Remove this book from your library?')) return;
+
+    showLoading();
+    const result = await removeOwnership(bookId, state.user.uid);
+    hideLoading();
+
+    if (result.success) {
+        showToast('Removed from library', 'success');
+        closeAllModals();
+        await loadMyBooks();
+    } else {
+        showToast('Failed to remove book', 'error');
+    }
+};
+
+window.toggleReadStatus = async function(bookId, markAsRead) {
+    if (!state.user || !bookId) return;
+
+    const shouldMarkRead = markAsRead === 'true' || markAsRead === true;
+    const newStatus = shouldMarkRead ? 'read' : 'unread';
+
+    showLoading();
+    const result = await updateItemStatus(bookId, newStatus);
+    hideLoading();
+
+    if (result.success) {
+        showToast(shouldMarkRead ? 'Marked as read!' : 'Marked as unread', 'success');
+        closeAllModals();
+        await loadMyBooks();
+    } else {
+        showToast('Failed to update status', 'error');
+    }
+};
+
+window.addToMyLibrary = function(bookDataJson) {
+    let bookData;
+    try {
+        bookData = typeof bookDataJson === 'string' ? JSON.parse(bookDataJson) : bookDataJson;
+    } catch (e) {
+        bookData = bookDataJson;
+    }
+    state.selectedBook = bookData;
+
+    // Show format picker inline
+    const picker = document.getElementById('ownership-format-picker');
+    if (picker) {
+        picker.classList.add('active');
+        picker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
+window.selectOwnershipFormat = function(format) {
+    // Update visual selection
+    document.querySelectorAll('.format-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.format === format);
+    });
+};
+
+window.confirmAddToLibrary = async function(format) {
+    if (!state.user || !state.selectedBook) return;
+
+    // Check library limit before proceeding
+    const canAdd = await checkLibraryLimitBeforeAdd();
+    if (!canAdd) {
+        return;
+    }
+
+    showLoading();
+
+    try {
+        // First, find or create a default "My Library" list
+        let libraryList = state.lists.find(l =>
+            l.name.toLowerCase() === 'my library' || l.listType === 'myLibrary'
+        );
+
+        if (!libraryList) {
+            // Create "My Library" list if it doesn't exist
+            const createResult = await createList({
+                name: 'My Library',
+                listType: 'myLibrary'
+            }, state.user.uid);
+
+            if (createResult.success) {
+                await loadLibraryData();
+                libraryList = state.lists.find(l => l.id === createResult.data.id);
+            }
+        }
+
+        if (!libraryList) {
+            hideLoading();
+            showToast('Could not create library list', 'error');
+            return;
+        }
+
+        // Add book to the list
+        const addResult = await addBookToList(state.selectedBook, libraryList.id, state.user.uid);
+
+        if (!addResult.success) {
+            hideLoading();
+            showToast(addResult.error || 'Failed to add book', 'error');
+            return;
+        }
+
+        // Now mark the item as owned (pass userId for limit check)
+        const ownedResult = await markAsOwned(addResult.data.id, format, state.user.uid);
+
+        hideLoading();
+
+        if (ownedResult.success) {
+            showToast('Added to your library!', 'success');
+            closeAllModals();
+            await loadMyBooks();
+            await loadLibraryData();
+        } else if (ownedResult.limitReached) {
+            // Show limit modal if marking ownership failed due to limit
+            showLibraryLimitModal();
+        } else {
+            showToast('Book added but ownership not set', 'warning');
+        }
+    } catch (error) {
+        hideLoading();
+        console.error('Add to library error:', error);
+        showToast('Failed to add book', 'error');
+    }
+};
 
 function renderClubs() {
     if (state.clubs.length === 0) {
@@ -2622,6 +3120,9 @@ window.openBookDetailModal = function(bookDataStr) {
     try {
         const book = JSON.parse(decodeURIComponent(bookDataStr));
 
+        // Store the book for later use
+        state.selectedBook = book;
+
         // Populate modal
         document.getElementById('book-detail-cover').innerHTML = book.coverImageUrl
             ? `<img src="${book.coverImageUrl}" alt="${book.title}">`
@@ -2635,13 +3136,29 @@ window.openBookDetailModal = function(bookDataStr) {
         if (book.pageCount) metaItems.push(`${book.pageCount} pages`);
         if (book.publishedDate) metaItems.push(`Published ${book.publishedDate}`);
         if (book.publisher) metaItems.push(book.publisher);
-        if (book.averageRating) metaItems.push(`⭐ ${book.averageRating} rating`);
+        if (book.averageRating) metaItems.push(`Rating: ${book.averageRating}`);
         if (book.isbn) metaItems.push(`ISBN: ${book.isbn}`);
         if (book.genre) metaItems.push(book.genre);
 
         document.getElementById('book-detail-meta').innerHTML = metaItems
             .map(item => `<span class="book-detail-meta-item">${item}</span>`)
             .join('');
+
+        // Reset format picker state
+        const formatPicker = document.getElementById('ownership-format-picker');
+        if (formatPicker) {
+            formatPicker.classList.remove('active');
+            // Reset to physical as default
+            document.querySelectorAll('.format-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.format === 'physical');
+            });
+        }
+
+        // Show the add button
+        const addBtn = document.getElementById('add-to-library-btn');
+        if (addBtn) {
+            addBtn.style.display = 'flex';
+        }
 
         openModal('book-detail-modal');
     } catch (e) {
@@ -2892,6 +3409,58 @@ window.removeBook = async (itemId, listId) => {
         if (state.currentList) {
             loadListDetail(state.currentList.id);
         }
+    }
+};
+
+/**
+ * Handle refetching a better cover image for a book
+ * Shows loading state, calls refetchBookCover, updates UI on success/failure
+ * @param {string} itemId - The item document ID
+ */
+window.handleRefetchCover = async (itemId) => {
+    if (!itemId) {
+        showToast('Invalid book ID', 'error');
+        return;
+    }
+
+    showLoading();
+    showToast('Searching for better cover...', 'info');
+
+    try {
+        // Search for a better cover
+        const searchResult = await refetchBookCover(itemId);
+
+        if (!searchResult.success) {
+            hideLoading();
+            showToast(searchResult.error || 'Could not find a better cover', 'error');
+            return;
+        }
+
+        const newCoverUrl = searchResult.data;
+
+        // Update the book item with the new cover
+        const updateResult = await updateBookCover(itemId, newCoverUrl);
+
+        hideLoading();
+
+        if (updateResult.success) {
+            showToast('Cover updated!', 'success');
+
+            // Refresh the UI to show the new cover
+            closeAllModals();
+            loadLibraryData();
+            loadMyBooks();
+            if (state.currentList) {
+                loadListDetail(state.currentList.id);
+            }
+        } else {
+            showToast(updateResult.error || 'Failed to update cover', 'error');
+        }
+
+    } catch (error) {
+        hideLoading();
+        console.error('Refetch cover error:', error);
+        showToast('Something went wrong. Please try again.', 'error');
     }
 };
 
