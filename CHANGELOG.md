@@ -22,7 +22,7 @@ Format: Each entry includes the change description and affected files.
   - Mobile-first responsive design
   - (files: `functions/index.js`)
 
-- **Rapid Barcode Scanning (Web)** - Restored and enhanced barcode scanning functionality to match iOS
+- **RapidScan™ (Web)** - Branded signature feature for rapid book cataloging, matching iOS
   - Full-screen immersive scanner view on mobile
   - Continuous scanning mode (camera doesn't stop between scans)
   - 3-second debouncing per ISBN to prevent duplicate scans
@@ -32,6 +32,7 @@ Format: Each entry includes the change description and affected files.
   - Toast notifications for success/already owned/not found/library full
   - Flash toggle button for device torch
   - Exit confirmation showing books scanned count
+  - RapidScan button added to My Books header for easy access
   - (files: `PageSwipe Web/app.html`, `PageSwipe Web/js/app.js`, `PageSwipe Web/css/app.css`)
 
 - **Premium Profile Page Redesign (Web)** - Complete redesign of the profile view

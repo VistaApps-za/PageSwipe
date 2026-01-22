@@ -556,7 +556,14 @@ function initEventListeners() {
         });
     }
 
-    // My Books - Add First Book button
+    // My Books - Header action buttons
+    document.getElementById('my-books-scan-btn')?.addEventListener('click', openBarcodeScanner);
+    document.getElementById('my-books-add-btn')?.addEventListener('click', () => {
+        openModal('add-book-modal');
+    });
+
+    // My Books - Empty state buttons
+    document.getElementById('scan-first-book-btn')?.addEventListener('click', openBarcodeScanner);
     document.getElementById('add-first-book-btn')?.addEventListener('click', () => {
         openModal('add-book-modal');
     });

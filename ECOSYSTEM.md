@@ -859,11 +859,11 @@ firestore.rules                   # Security rules
 
 ---
 
-## Barcode Scanning
+## RapidScan™
 
 ### Overview
 
-Both iOS and Web support barcode scanning for rapidly adding books to your library. The rapid scanner is designed for bulk book cataloging with continuous scanning capability.
+**RapidScan** is PageSwipe's signature feature for rapidly cataloging your book library. Both iOS and Web support RapidScan for bulk book cataloging with continuous barcode scanning capability - no confirmation dialogs, just point and scan.
 
 ### Features
 
@@ -880,9 +880,9 @@ Both iOS and Web support barcode scanning for rapidly adding books to your libra
 | Toast Notifications | ✓ | ✓ |
 | Library Limit Check | ✓ | ✓ |
 
-### Rapid Scanner Flow
+### RapidScan Flow
 
-1. User opens scanner (from Add Book modal or dedicated entry point)
+1. User opens RapidScan (from My Books header or dedicated entry point)
 2. Camera starts in continuous mode (doesn't stop after each scan)
 3. When barcode detected:
    - Check debounce (skip if same ISBN within 3 seconds)
