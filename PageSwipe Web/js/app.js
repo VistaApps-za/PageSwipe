@@ -3400,19 +3400,26 @@ async function processRapidScan(isbn) {
         }
         updateRapidScannerUI();
 
-        // Get or create the owned books list
+        // Get the default "Want to Read" list to add scanned books to
         if (!rapidScannerState.ownedListId) {
             const listsResult = await getUserLists(userId, state.userProfile?.displayName || 'User');
             if (listsResult.success && listsResult.data) {
-                const ownedList = listsResult.data.find(l => l.type === 'myBooks');
-                if (ownedList) {
-                    rapidScannerState.ownedListId = ownedList.id;
+                // First try to find the default "Want to Read" list
+                const wantToReadList = listsResult.data.find(l => l.listType === 'toRead' && l.isDefault);
+                if (wantToReadList) {
+                    rapidScannerState.ownedListId = wantToReadList.id;
+                } else {
+                    // Fallback: use any toRead list
+                    const anyToReadList = listsResult.data.find(l => l.listType === 'toRead');
+                    if (anyToReadList) {
+                        rapidScannerState.ownedListId = anyToReadList.id;
+                    }
                 }
             }
         }
 
         if (!rapidScannerState.ownedListId) {
-            throw new Error('Could not find My Books list');
+            throw new Error('Could not find a list to add books to. Please create a list first.');
         }
 
         // Add book to list as owned
