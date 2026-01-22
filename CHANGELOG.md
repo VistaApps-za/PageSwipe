@@ -12,6 +12,16 @@ Format: Each entry includes the change description and affected files.
 
 ### Added
 
+- **Premium Public Share Pages** - Redesigned shared list and club invite pages for marketing conversion
+  - Shared list page: Immersive gradient hero, animated floating particles, 3D book card hover effects
+  - Club invite page: "You're invited!" hero, animated rings, shimmer effect on join code
+  - 404 page: Animated floating books illustration with marketing pitch
+  - Feature highlights and trust badges to encourage sign-ups
+  - Staggered fade-in animations on book grids
+  - Full dark mode support
+  - Mobile-first responsive design
+  - (files: `functions/index.js`)
+
 - **Rapid Barcode Scanning (Web)** - Restored and enhanced barcode scanning functionality to match iOS
   - Full-screen immersive scanner view on mobile
   - Continuous scanning mode (camera doesn't stop between scans)
