@@ -1072,11 +1072,16 @@
                     </div>
                 </div>
                 <button class="rapid-scanner-flash-btn" id="rapid-scanner-flash" aria-label="Toggle flashlight">
-                    <svg class="flash-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    <!-- Flashlight off - outline style matching SF Symbol flashlight.off.fill -->
+                    <svg class="flash-off" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 22V18M15 22V18M9 18H15M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                        <ellipse cx="12" cy="8" rx="2" ry="1.5" fill="currentColor" opacity="0.4"/>
                     </svg>
-                    <svg class="flash-on" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    <!-- Flashlight on - filled style matching SF Symbol flashlight.on.fill -->
+                    <svg class="flash-on" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 22V18H15V22M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18H9Z" fill="currentColor"/>
+                        <ellipse cx="12" cy="8" rx="2.5" ry="2" fill="#fbbf24"/>
+                        <ellipse cx="12" cy="8" rx="4" ry="3" fill="#fbbf24" opacity="0.3"/>
                     </svg>
                 </button>
             </div>

@@ -6662,7 +6662,7 @@ h4 { font-size: 0.9375rem; }
 
 .rapid-scanner-done-btn {
     font-size: 17px;
-    font-weight: 500;
+    font-weight: 600;
     color: white;
     background: transparent;
     border: none;
@@ -6671,6 +6671,7 @@ h4 { font-size: 0.9375rem; }
     min-width: 70px;
     text-align: left;
     -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
 .rapid-scanner-done-btn:active {
@@ -6692,6 +6693,7 @@ h4 { font-size: 0.9375rem; }
     font-weight: 600;
     color: white;
     letter-spacing: -0.02em;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
 .rapid-scanner-processing {
@@ -6777,73 +6779,135 @@ h4 { font-size: 0.9375rem; }
     padding-bottom: 80px; /* Offset to account for bottom section, centers frame visually */
 }
 
+/* Scan frame - matches iOS RapidScanView exactly */
 .rapid-scanner-frame {
     position: relative;
-    width: min(300px, 75vw);
-    height: min(200px, 50vw);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 24px;
+    width: 280px;
+    height: 180px;
+    /* Subtle white border between corners - matches iOS */
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
 }
 
+/* Corner brackets - teal/mint color matching iOS pagePrimary */
 .rapid-scanner-corner {
     position: absolute;
-    width: 36px;
-    height: 36px;
-    border: 4px solid var(--color-primary);
+    width: 30px;
+    height: 30px;
+}
+
+/* Using pseudo-elements for clean L-shaped corners without rounded edges */
+.rapid-scanner-corner::before,
+.rapid-scanner-corner::after {
+    content: '';
+    position: absolute;
+    background: var(--color-teal);
 }
 
 .rapid-scanner-corner.top-left {
     top: -2px;
     left: -2px;
-    border-right: none;
-    border-bottom: none;
-    border-top-left-radius: 24px;
+}
+.rapid-scanner-corner.top-left::before {
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 30px;
+    border-radius: 2px 2px 0 0;
+}
+.rapid-scanner-corner.top-left::after {
+    top: 0;
+    left: 0;
+    width: 30px;
+    height: 4px;
+    border-radius: 2px 0 0 2px;
 }
 
 .rapid-scanner-corner.top-right {
     top: -2px;
     right: -2px;
-    border-left: none;
-    border-bottom: none;
-    border-top-right-radius: 24px;
+}
+.rapid-scanner-corner.top-right::before {
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 30px;
+    border-radius: 2px 2px 0 0;
+}
+.rapid-scanner-corner.top-right::after {
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 4px;
+    border-radius: 0 2px 2px 0;
 }
 
 .rapid-scanner-corner.bottom-left {
     bottom: -2px;
     left: -2px;
-    border-right: none;
-    border-top: none;
-    border-bottom-left-radius: 24px;
+}
+.rapid-scanner-corner.bottom-left::before {
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    height: 30px;
+    border-radius: 0 0 2px 2px;
+}
+.rapid-scanner-corner.bottom-left::after {
+    bottom: 0;
+    left: 0;
+    width: 30px;
+    height: 4px;
+    border-radius: 2px 0 0 2px;
 }
 
 .rapid-scanner-corner.bottom-right {
     bottom: -2px;
     right: -2px;
-    border-left: none;
-    border-top: none;
-    border-bottom-right-radius: 24px;
+}
+.rapid-scanner-corner.bottom-right::before {
+    bottom: 0;
+    right: 0;
+    width: 4px;
+    height: 30px;
+    border-radius: 0 0 2px 2px;
+}
+.rapid-scanner-corner.bottom-right::after {
+    bottom: 0;
+    right: 0;
+    width: 30px;
+    height: 4px;
+    border-radius: 0 2px 2px 0;
 }
 
-/* Animated scan line */
+/* Animated scan line - matches iOS ScanningLineView */
 .rapid-scanner-line {
     position: absolute;
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     height: 2px;
     background: linear-gradient(
         to right,
-        transparent,
-        var(--color-primary),
-        transparent
+        transparent 0%,
+        var(--color-teal) 20%,
+        var(--color-teal) 80%,
+        transparent 100%
     );
-    animation: rapid-scanner-line 1.8s ease-in-out infinite;
-    top: 12px;
-    border-radius: 2px;
+    opacity: 0.8;
+    animation: rapid-scanner-line 1.5s ease-in-out infinite alternate;
+    top: 10px;
+    border-radius: 1px;
 }
 
 @keyframes rapid-scanner-line {
-    0%, 100% { top: 12px; opacity: 0.9; }
-    50% { top: calc(100% - 14px); opacity: 0.9; }
+    0% {
+        top: 10px;
+        opacity: 0.8;
+    }
+    100% {
+        top: calc(100% - 12px);
+        opacity: 0.8;
+    }
 }
 
 /* Bottom section - minimal like iOS */
@@ -6874,21 +6938,20 @@ h4 { font-size: 0.9375rem; }
 }
 
 .rapid-scanner-recent-header {
-    padding: 0 24px 14px;
+    padding: 0 20px 8px;
 }
 
 .rapid-scanner-recent-header span {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
 .rapid-scanner-recent-list {
     display: flex;
-    gap: 14px;
-    padding: 0 24px;
+    gap: 12px;
+    padding: 0 20px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
@@ -6900,25 +6963,24 @@ h4 { font-size: 0.9375rem; }
     display: none;
 }
 
-/* Recent scan card - premium glass effect */
+/* Recent scan card - matches iOS RecentScanCard exactly */
 .rapid-scan-card {
     flex-shrink: 0;
     display: flex;
-    gap: 12px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.12);
+    gap: 10px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-radius: 14px;
-    min-width: 170px;
-    max-width: 190px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-width: 155px;
+    max-width: 175px;
 }
 
 .rapid-scan-card-cover {
-    width: 44px;
-    height: 64px;
-    border-radius: 8px;
+    width: 40px;
+    height: 60px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.08);
     overflow: hidden;
     flex-shrink: 0;
@@ -6950,14 +7012,15 @@ h4 { font-size: 0.9375rem; }
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
+    width: 100px;
 }
 
 .rapid-scan-card-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: white;
-    line-height: 1.35;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -6967,14 +7030,14 @@ h4 { font-size: 0.9375rem; }
 .rapid-scan-card-status {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: 4px;
+    font-size: 10px;
     font-weight: 500;
 }
 
 .rapid-scan-card-status svg {
-    width: 13px;
-    height: 13px;
+    width: 10px;
+    height: 10px;
     flex-shrink: 0;
 }
 
@@ -6983,8 +7046,8 @@ h4 { font-size: 0.9375rem; }
 }
 
 .rapid-scan-card-status.adding .status-spinner {
-    width: 13px;
-    height: 13px;
+    width: 10px;
+    height: 10px;
     border: 1.5px solid rgba(255, 255, 255, 0.3);
     border-top-color: white;
     border-radius: 50%;
@@ -6996,37 +7059,36 @@ h4 { font-size: 0.9375rem; }
 }
 
 .rapid-scan-card-status.already-owned {
-    color: var(--color-primary);
+    color: var(--color-teal);
 }
 
 .rapid-scan-card-status.failed {
     color: #f87171;
 }
 
-/* Session count - minimal iOS style */
+/* Session count - matches iOS sessionCountView exactly */
 .rapid-scanner-session {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 8px 24px 0;
+    gap: 8px;
+    padding: 8px 20px 0;
 }
 
 .rapid-scanner-session-badge {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 14px 24px;
-    background: rgba(255, 255, 255, 0.12);
+    gap: 8px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rapid-scanner-session-badge svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     color: #34d399;
 }
 
@@ -7035,14 +7097,16 @@ h4 { font-size: 0.9375rem; }
     font-weight: 500;
     color: white;
     letter-spacing: -0.01em;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
 .rapid-scanner-hint {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.6);
     margin: 0;
     letter-spacing: -0.01em;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Scanner toast notifications - positioned below header */
@@ -7112,7 +7176,7 @@ h4 { font-size: 0.9375rem; }
 }
 
 .rapid-scanner-toast-icon.info {
-    color: var(--color-primary);
+    color: var(--color-teal);
 }
 
 .rapid-scanner-toast-content {
