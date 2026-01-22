@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PageSwipe Analytics</title>
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/WraptIcon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --teal: #2DB3A0;
+            --coral: #F2786D;
+            --navy: #1E3A5F;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: rgba(30, 58, 95, 0.06);
+            --text: #1e3a5f;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --radius: 16px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --surface: #1e293b;
+                --border: rgba(255, 255, 255, 0.06);
+                --text: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --text-muted: #64748b;
+            }
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Loading & Auth Screens */
+        .loading-screen, .auth-required {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            z-index: 100;
+        }
+        .loading-content, .auth-content {
+            text-align: center;
+        }
+        .loading-logo, .auth-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            margin-top: 16px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .auth-content h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .auth-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--navy), #162d4a);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,58,95,0.25); }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--bg); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+        .btn-ghost:hover { color: var(--text); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn svg.spin { animation: spin 1s linear infinite; }
+
+        /* Dashboard */
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        @media (min-width: 768px) { .dashboard { padding: 32px 40px; } }
+
+        /* Header */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .header-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+        }
+        .header-brand h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .header-brand p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-family: 'Nunito', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* Primary Stats */
+        .primary-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        @media (min-width: 768px) {
+            .primary-stats { grid-template-columns: repeat(4, 1fr); }
+        }
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-icon svg { width: 20px; height: 20px; }
+        .stat-icon.users { background: rgba(45, 179, 160, 0.12); color: var(--teal); }
+        .stat-icon.books { background: rgba(30, 58, 95, 0.1); color: var(--navy); }
+        .stat-icon.reviews { background: rgba(242, 120, 109, 0.12); color: var(--coral); }
+        .stat-icon.clubs { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+        .stat-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .stat-value {
+            font-family: 'Nunito', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Metrics Row */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        @media (min-width: 640px) {
+            .metrics-row { grid-template-columns: repeat(4, 1fr); }
+        }
+        .metric-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .metric-value {
+            font-family: 'Nunito', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .metric-value.highlight { color: var(--teal); }
+
+        /* Chart */
+        .chart-section {
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .chart-header h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .chart-header span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .chart-container {
+            height: 300px;
+        }
+
+        /* Growth Summary */
+        .growth-section {
+            margin-bottom: 32px;
+        }
+        .growth-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 768px) {
+            .growth-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .growth-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .growth-card h3 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        .growth-items {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .growth-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .growth-item-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .growth-item-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .growth-item-dot.users { background: var(--teal); }
+        .growth-item-dot.books { background: var(--navy); }
+        .growth-item-dot.reviews { background: var(--coral); }
+        .growth-item-dot.clubs { background: #8b5cf6; }
+        .growth-item-value {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <img src="images/WraptIcon.png" alt="PageSwipe" class="loading-logo">
+                <svg class="loading-spinner" viewBox="0 0 50 50">
+                    <defs>
+                        <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#2DB3A0"/>
+                            <stop offset="100%" stop-color="#F2786D"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="25" cy="25" r="20" fill="none" stroke="url(#spinner-gradient)" stroke-width="5" stroke-linecap="round" stroke-dasharray="90 150"/>
+                </svg>
+                <p class="loading-text">Loading Analytics...</p>
+            </div>
+        </div>
+
+        <!-- Auth Required -->
+        <div id="auth-required" class="auth-required" style="display: none;">
+            <div class="auth-content">
+                <img src="images/WraptIcon.png" alt="PageSwipe" class="auth-logo">
+                <h1>Admin Access Required</h1>
+                <p>Sign in to view the analytics dashboard.</p>
+                <a href="app.html" class="btn btn-primary">Sign In</a>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-brand">
+                    <img src="images/WraptIcon.png" alt="PageSwipe" class="header-logo">
+                    <div>
+                        <h1>Analytics</h1>
+                        <p id="last-updated">Loading...</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="refresh-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Refresh
+                    </button>
+                    <a href="app.html" class="btn btn-ghost">Back to App</a>
+                </div>
+            </header>
+
+            <!-- Primary Stats -->
+            <p class="section-title">Overview</p>
+            <section class="primary-stats">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon users">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <span class="stat-badge" id="users-badge">-</span>
+                    </div>
+                    <div class="stat-value" id="total-users">-</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon books">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        </div>
+                        <span class="stat-badge" id="books-badge">-</span>
+                    </div>
+                    <div class="stat-value" id="total-books">-</div>
+                    <div class="stat-label">Books Added</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon reviews">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </div>
+                        <span class="stat-badge" id="reviews-badge">-</span>
+                    </div>
+                    <div class="stat-value" id="total-reviews">-</div>
+                    <div class="stat-label">Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div class="stat-icon clubs">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                        </div>
+                        <span class="stat-badge" id="clubs-badge">-</span>
+                    </div>
+                    <div class="stat-value" id="total-clubs">-</div>
+                    <div class="stat-label">Clubs</div>
+                </div>
+            </section>
+
+            <!-- Key Metrics -->
+            <p class="section-title">Key Metrics</p>
+            <section class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-value highlight" id="pro-users">-</div>
+                    <div class="metric-label">Pro Subscribers</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="conversion-rate">-</div>
+                    <div class="metric-label">Conversion Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="books-per-user">-</div>
+                    <div class="metric-label">Books per User</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="avg-rating">-</div>
+                    <div class="metric-label">Avg Rating</div>
+                </div>
+            </section>
+
+            <!-- Activity Chart -->
+            <p class="section-title">Activity</p>
+            <section class="chart-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Growth Trend</h2>
+                        <span>Last 30 days</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="activity-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Growth Summary -->
+            <p class="section-title">Growth</p>
+            <section class="growth-section">
+                <div class="growth-grid">
+                    <div class="growth-card">
+                        <h3>This Week</h3>
+                        <div class="growth-items">
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot users"></span> New Users</span>
+                                <span class="growth-item-value" id="week-users">-</span>
+                            </div>
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot books"></span> Books Added</span>
+                                <span class="growth-item-value" id="week-books">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="growth-card">
+                        <h3>This Month</h3>
+                        <div class="growth-items">
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot users"></span> New Users</span>
+                                <span class="growth-item-value" id="month-users">-</span>
+                            </div>
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot books"></span> Books Added</span>
+                                <span class="growth-item-value" id="month-books">-</span>
+                            </div>
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot reviews"></span> Reviews</span>
+                                <span class="growth-item-value" id="month-reviews">-</span>
+                            </div>
+                            <div class="growth-item">
+                                <span class="growth-item-label"><span class="growth-item-dot clubs"></span> New Clubs</span>
+                                <span class="growth-item-value" id="month-clubs">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="footer">
+                PageSwipe Analytics
+            </footer>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWQHsdFEPG0fhxNIykkCjBkfWnKZpcce0",
+            authDomain: "pageswipe.firebaseapp.com",
+            projectId: "pageswipe",
+            storageBucket: "pageswipe.firebasestorage.app",
+            messagingSenderId: "916001546685",
+            appId: "1:916001546685:web:26d8866333a7f59b61f2d4",
+            measurementId: "G-TPHCN52F2S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app);
+
+        const loadingScreen = document.getElementById('loading-screen');
+        const authRequired = document.getElementById('auth-required');
+        const dashboard = document.getElementById('dashboard');
+        const refreshBtn = document.getElementById('refresh-btn');
+
+        let activityChart = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                loadingScreen.style.display = 'none';
+                dashboard.style.display = 'block';
+                await loadAnalytics();
+            } else {
+                loadingScreen.style.display = 'none';
+                authRequired.style.display = 'flex';
+            }
+        });
+
+        async function loadAnalytics() {
+            try {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Loading...';
+
+                const getAnalytics = httpsCallable(functions, 'getAnalytics');
+                const result = await getAnalytics();
+                updateDashboard(result.data);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load analytics: ' + error.message);
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Refresh';
+            }
+        }
+
+        function updateDashboard(data) {
+            const d = new Date(data.generatedAt);
+            document.getElementById('last-updated').textContent = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+            // Primary stats
+            document.getElementById('total-users').textContent = fmt(data.totals.users);
+            document.getElementById('total-books').textContent = fmt(data.totals.books);
+            document.getElementById('total-reviews').textContent = fmt(data.totals.reviews);
+            document.getElementById('total-clubs').textContent = fmt(data.totals.clubs);
+
+            // Badges
+            document.getElementById('users-badge').textContent = `+${data.last7Days.users} this week`;
+            document.getElementById('books-badge').textContent = `+${data.last7Days.books} this week`;
+            document.getElementById('reviews-badge').textContent = `+${data.last30Days.reviews} /mo`;
+            document.getElementById('clubs-badge').textContent = `+${data.last30Days.clubs} /mo`;
+
+            // Key metrics
+            document.getElementById('pro-users').textContent = fmt(data.totals.proUsers);
+            const convRate = data.totals.users > 0 ? ((data.totals.proUsers / data.totals.users) * 100).toFixed(1) : 0;
+            document.getElementById('conversion-rate').textContent = convRate + '%';
+            const booksPerUser = data.totals.users > 0 ? (data.totals.books / data.totals.users).toFixed(1) : 0;
+            document.getElementById('books-per-user').textContent = booksPerUser;
+            document.getElementById('avg-rating').textContent = data.averageRating ? data.averageRating.toFixed(1) + '/5' : 'N/A';
+
+            // Growth - Week
+            document.getElementById('week-users').textContent = '+' + data.last7Days.users;
+            document.getElementById('week-books').textContent = '+' + data.last7Days.books;
+
+            // Growth - Month
+            document.getElementById('month-users').textContent = '+' + data.last30Days.users;
+            document.getElementById('month-books').textContent = '+' + data.last30Days.books;
+            document.getElementById('month-reviews').textContent = '+' + data.last30Days.reviews;
+            document.getElementById('month-clubs').textContent = '+' + data.last30Days.clubs;
+
+            updateChart(data.dailyActivity);
+        }
+
+        function fmt(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toString();
+        }
+
+        function updateChart(dailyActivity) {
+            const ctx = document.getElementById('activity-chart').getContext('2d');
+            const labels = dailyActivity.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            if (activityChart) activityChart.destroy();
+
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Users',
+                            data: dailyActivity.map(d => d.users),
+                            borderColor: '#2DB3A0',
+                            backgroundColor: 'rgba(45, 179, 160, 0.08)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'Books',
+                            data: dailyActivity.map(d => d.books),
+                            borderColor: '#1E3A5F',
+                            backgroundColor: 'rgba(30, 58, 95, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 16,
+                                font: { family: 'Inter', size: 12, weight: '500' }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11 }, maxTicksLimit: 8, color: '#94a3b8' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: { font: { family: 'Inter', size: 11 }, precision: 0, color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        refreshBtn.addEventListener('click', loadAnalytics);
+    </script>
+</body>
+</html>
