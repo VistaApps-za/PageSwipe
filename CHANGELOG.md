@@ -8,6 +8,73 @@ Format: Each entry includes the change description and affected files.
 
 ---
 
+## [2026-01-22]
+
+### Added
+
+- **Rapid Barcode Scanning (Web)** - Restored and enhanced barcode scanning functionality to match iOS
+  - Full-screen immersive scanner view on mobile
+  - Continuous scanning mode (camera doesn't stop between scans)
+  - 3-second debouncing per ISBN to prevent duplicate scans
+  - "Recently Scanned" horizontal scrollable list showing last 10 books
+  - Session count badge ("X books added this session")
+  - Auto-adds books to library as owned (no confirmation modal)
+  - Toast notifications for success/already owned/not found/library full
+  - Flash toggle button for device torch
+  - Exit confirmation showing books scanned count
+  - (files: `PageSwipe Web/app.html`, `PageSwipe Web/js/app.js`, `PageSwipe Web/css/app.css`)
+
+- **Premium Profile Page Redesign (Web)** - Complete redesign of the profile view
+  - Immersive gradient header with animated pattern background
+  - Premium avatar with animated gradient ring and glow effect
+  - Beautiful stat cards with icons and hover animations
+  - Reading Journey achievement teaser card
+  - Stunning Pro upgrade card with floating orbs and shine animation
+  - Full dark mode support
+  - Mobile-responsive design
+  - (files: `PageSwipe Web/app.html`, `PageSwipe Web/css/app.css`, `PageSwipe Web/js/app.js`)
+
+- **Premium "How it Works" Redesign (Landing Page)** - Complete redesign of the landing page section
+  - 3D perspective sign-in card mockup for Step 1
+  - Stacked swipe card interface for Step 2
+  - Book club card with member avatars for Step 3
+  - Floating animated notification badges
+  - Alternating left/right layout
+  - Full responsive and dark mode support
+  - (files: `PageSwipe Web/index.html`)
+
+- **Upgrade Button Navigation** - All upgrade buttons now navigate to premium.html
+  - Profile upgrade button
+  - Library limit upgrade buttons
+  - Premium upgrade prompts
+  - (files: `PageSwipe Web/app.html`, `PageSwipe Web/js/app.js`)
+
+- **Footer Navigation Links** - Fixed placeholder links in landing page footer
+  - Pricing → premium.html
+  - FAQ → faq.html
+  - Privacy Policy → privacy.html
+  - Terms of Service → terms.html
+  - (files: `PageSwipe Web/index.html`)
+
+- **Library Genre Filter (iOS + Web)** - Filter books in My Books view by genre
+  - Horizontal scrollable genre filter pills below the read/unread status filters
+  - Dynamically extracts genres from user's owned books (only shows genres that exist)
+  - Normalizes messy API genres (e.g., "Fiction / Thrillers" → "Thrillers")
+  - Works alongside existing search and read/unread filters
+  - Purple gradient styling to visually distinguish from coral status filters
+  - Shows book count badge for each genre
+  - "All Genres" option to clear filter
+  - (files: `PageSwipe/Views/Library/MyBooksView.swift`, `PageSwipe Web/js/app.js`, `PageSwipe Web/app.html`, `PageSwipe Web/css/app.css`)
+
+- **Genre/Categories fields on BookItem** - Extended BookItem model for genre filtering
+  - Added `genre: String?` - Primary genre from Google Books API
+  - Added `categories: [String]?` - All categories from Google Books API
+  - Updated CodingKeys, initializers, and Firestore decoder
+  - DataManager now populates genre data when adding books to library
+  - (files: `PageSwipe/Models/Models.swift`, `PageSwipe/Services/DataManager.swift`, `ECOSYSTEM.md`)
+
+---
+
 ## [2026-01-20]
 
 ### Added

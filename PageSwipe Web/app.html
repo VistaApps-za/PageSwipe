@@ -451,6 +451,11 @@
                                     Unread
                                 </button>
                             </div>
+
+                            <!-- Genre Filter Pills (dynamically populated) -->
+                            <div class="my-books-genre-filters" id="my-books-genre-filters" style="display: none;">
+                                <!-- Genre chips will be dynamically inserted by JavaScript -->
+                            </div>
                         </div>
 
                         <!-- Library Limit Warning Banner (shown at 40+ books for free users) -->
@@ -515,9 +520,17 @@
                             <h1 id="list-detail-title">List Name</h1>
                             <span class="compact-header-meta" id="list-detail-count">0 books</span>
                         </div>
-                        <button class="btn btn-icon" id="list-options-btn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                        </button>
+                        <div class="compact-header-actions">
+                            <button class="btn btn-icon" id="list-revoke-share-btn" title="Revoke share link" style="display: none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                            </button>
+                            <button class="btn btn-icon" id="list-share-btn" title="Share">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                            </button>
+                            <button class="btn btn-icon" id="list-options-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </button>
+                        </div>
                     </header>
 
                     <div class="list-detail-content">
@@ -578,7 +591,7 @@
                     <div class="club-info-bar">
                         <span class="club-info-members" id="club-detail-members">0 members</span>
                         <span class="club-info-separator">•</span>
-                        <span class="club-info-description" id="club-description"></span>
+                        <span class="club-info-description" id="club-detail-description"></span>
                     </div>
 
                     <!-- Tabs -->
@@ -743,47 +756,207 @@
                 </div>
 
                 <!-- Profile View -->
-                <div id="profile-view" class="view">
-                    <header class="compact-header">
-                        <h1>Profile</h1>
-                        <button class="btn btn-icon" id="settings-btn">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <div id="profile-view" class="view profile-view-redesign">
+                    <!-- Immersive Profile Header -->
+                    <div class="profile-hero">
+                        <div class="profile-hero-bg">
+                            <div class="profile-hero-gradient"></div>
+                            <div class="profile-hero-pattern"></div>
+                        </div>
+
+                        <!-- Settings Button -->
+                        <button class="profile-settings-btn" id="settings-btn" aria-label="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            </svg>
                         </button>
-                    </header>
 
-                    <div class="profile-content">
-                        <div class="profile-card">
-                            <div class="profile-avatar" id="profile-avatar">?</div>
-                            <h2 id="profile-name">User Name</h2>
-                            <p id="profile-email">user@example.com</p>
-                            <span class="profile-badge" id="profile-badge">Free</span>
-                        </div>
-
-                        <div class="profile-stats">
-                            <div class="profile-stat">
-                                <span class="profile-stat-value" id="profile-books-read">0</span>
-                                <span class="profile-stat-label">Books Read</span>
-                            </div>
-                            <div class="profile-stat">
-                                <span class="profile-stat-value" id="profile-this-year">0</span>
-                                <span class="profile-stat-label">This Year</span>
-                            </div>
-                            <div class="profile-stat">
-                                <span class="profile-stat-value" id="profile-clubs-count">0</span>
-                                <span class="profile-stat-label">Clubs</span>
+                        <!-- Avatar with Gradient Ring -->
+                        <div class="profile-avatar-wrapper">
+                            <div class="profile-avatar-ring">
+                                <div class="profile-avatar-glow"></div>
+                                <div class="profile-avatar" id="profile-avatar">
+                                    <span class="profile-avatar-initials" id="profile-avatar-initials">?</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="profile-actions">
-                            <button class="btn btn-secondary btn-full" id="edit-profile-btn">Edit Profile</button>
-                            <button class="btn btn-ghost btn-full" id="signout-btn">Sign Out</button>
+                        <!-- User Info -->
+                        <div class="profile-user-info">
+                            <h1 class="profile-name" id="profile-name">User Name</h1>
+                            <p class="profile-email" id="profile-email">user@example.com</p>
+                            <div class="profile-badge-wrapper">
+                                <span class="profile-badge" id="profile-badge">
+                                    <svg class="profile-badge-icon" viewBox="0 0 16 16" fill="currentColor">
+                                        <path d="M8 1a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 1zm0 10a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 11zm7-3a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 15 8zM4 8a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 4 8zm9.546-4.96a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0zm-10.03 8.98a.75.75 0 0 1 0 1.061l-1.061 1.06a.75.75 0 0 1-1.06-1.06l1.06-1.06a.75.75 0 0 1 1.06 0zm8.97 1.06a.75.75 0 0 1-1.06 0l-1.061-1.06a.75.75 0 0 1 1.06-1.061l1.061 1.06a.75.75 0 0 1 0 1.061zM4.575 5.161a.75.75 0 0 1-1.06 0L2.454 4.1a.75.75 0 1 1 1.06-1.06l1.06 1.06a.75.75 0 0 1 0 1.06z"/>
+                                    </svg>
+                                    <span class="profile-badge-text">Free</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Content -->
+                    <div class="profile-content-redesign">
+                        <!-- Stats Cards -->
+                        <div class="profile-stats-grid">
+                            <div class="profile-stat-card">
+                                <div class="profile-stat-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                        <path d="M8 7h8"/>
+                                        <path d="M8 11h6"/>
+                                    </svg>
+                                </div>
+                                <div class="profile-stat-content">
+                                    <span class="profile-stat-value" id="profile-books-count">0</span>
+                                    <span class="profile-stat-label">Books Read</span>
+                                </div>
+                            </div>
+
+                            <div class="profile-stat-card">
+                                <div class="profile-stat-icon profile-stat-icon--accent">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                        <path d="M8 14h.01"/>
+                                        <path d="M12 14h.01"/>
+                                        <path d="M16 14h.01"/>
+                                        <path d="M8 18h.01"/>
+                                        <path d="M12 18h.01"/>
+                                    </svg>
+                                </div>
+                                <div class="profile-stat-content">
+                                    <span class="profile-stat-value" id="profile-year-count">0</span>
+                                    <span class="profile-stat-label">This Year</span>
+                                </div>
+                            </div>
+
+                            <div class="profile-stat-card">
+                                <div class="profile-stat-icon profile-stat-icon--teal">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <div class="profile-stat-content">
+                                    <span class="profile-stat-value" id="profile-clubs-count">0</span>
+                                    <span class="profile-stat-label">Book Clubs</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="upgrade-card" id="upgrade-card">
-                            <div class="upgrade-badge">PRO</div>
-                            <h3>Upgrade to Pro</h3>
-                            <p>Unlimited lists, clubs, and more</p>
-                            <button class="btn btn-primary btn-full">Upgrade Now</button>
+                        <!-- Reading Streak / Achievement -->
+                        <div class="profile-achievement-card">
+                            <div class="profile-achievement-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 2L14.09 8.26L21 9.27L16 14.14L17.18 21.02L12 17.77L6.82 21.02L8 14.14L3 9.27L9.91 8.26L12 2Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="profile-achievement-content">
+                                <span class="profile-achievement-title">Reading Journey</span>
+                                <span class="profile-achievement-subtitle">Keep reading to unlock achievements</span>
+                            </div>
+                            <div class="profile-achievement-badge">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="profile-actions-card">
+                            <button class="profile-action-btn" id="edit-profile-btn">
+                                <div class="profile-action-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </div>
+                                <span class="profile-action-label">Edit Profile</span>
+                                <svg class="profile-action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </button>
+
+                            <div class="profile-action-divider"></div>
+
+                            <button class="profile-action-btn profile-action-btn--danger" id="signout-btn">
+                                <div class="profile-action-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" y1="12" x2="9" y2="12"/>
+                                    </svg>
+                                </div>
+                                <span class="profile-action-label">Sign Out</span>
+                                <svg class="profile-action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Premium Upgrade Card -->
+                        <div class="profile-upgrade-card" id="upgrade-card">
+                            <div class="profile-upgrade-bg">
+                                <div class="profile-upgrade-orb profile-upgrade-orb--1"></div>
+                                <div class="profile-upgrade-orb profile-upgrade-orb--2"></div>
+                                <div class="profile-upgrade-shine"></div>
+                            </div>
+
+                            <div class="profile-upgrade-content">
+                                <div class="profile-upgrade-header">
+                                    <div class="profile-upgrade-badge">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                                            <path d="M12 2L14.09 8.26L21 9.27L16 14.14L17.18 21.02L12 17.77L6.82 21.02L8 14.14L3 9.27L9.91 8.26L12 2Z"/>
+                                        </svg>
+                                        <span>PRO</span>
+                                    </div>
+                                    <h3 class="profile-upgrade-title">Unlock Your Full Potential</h3>
+                                    <p class="profile-upgrade-subtitle">Elevate your reading experience with Pro</p>
+                                </div>
+
+                                <ul class="profile-upgrade-features">
+                                    <li class="profile-upgrade-feature">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        <span>Unlimited reading lists</span>
+                                    </li>
+                                    <li class="profile-upgrade-feature">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        <span>Create and join unlimited clubs</span>
+                                    </li>
+                                    <li class="profile-upgrade-feature">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        <span>Advanced reading insights</span>
+                                    </li>
+                                    <li class="profile-upgrade-feature">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        <span>Priority support</span>
+                                    </li>
+                                </ul>
+
+                                <button class="profile-upgrade-cta" id="profile-upgrade-btn" onclick="window.location.href='premium.html'">
+                                    <span>Upgrade to Pro</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                        <polyline points="12 5 19 12 12 19"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -851,60 +1024,97 @@
             </div>
         </div>
 
-        <!-- Barcode Scanner Modal -->
-        <div id="scanner-modal" class="modal scanner-modal">
-            <div class="modal-backdrop"></div>
-            <div class="modal-content scanner-modal-content">
-                <div class="scanner-header">
-                    <h2>Scan Barcode</h2>
-                    <button class="btn btn-icon modal-close" id="scanner-close-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"/>
-                            <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="scanner-body">
-                    <div id="scanner-preview" class="scanner-preview"></div>
-                    <div class="scanner-overlay">
-                        <div class="scanner-frame">
-                            <div class="scanner-corner top-left"></div>
-                            <div class="scanner-corner top-right"></div>
-                            <div class="scanner-corner bottom-left"></div>
-                            <div class="scanner-corner bottom-right"></div>
-                        </div>
+        <!-- Rapid Barcode Scanner (Full-screen on mobile, modal on desktop) -->
+        <div id="rapid-scanner" class="rapid-scanner">
+            <!-- Top gradient overlay -->
+            <div class="rapid-scanner-gradient-top"></div>
+
+            <!-- Camera preview -->
+            <div id="rapid-scanner-preview" class="rapid-scanner-preview"></div>
+
+            <!-- Header -->
+            <div class="rapid-scanner-header">
+                <button class="rapid-scanner-done-btn" id="rapid-scanner-done">Done</button>
+                <div class="rapid-scanner-title">
+                    <span>Scan Books</span>
+                    <div class="rapid-scanner-processing" id="rapid-scanner-processing">
+                        <div class="rapid-scanner-processing-spinner"></div>
+                        <span>Looking up...</span>
                     </div>
-                    <p class="scanner-hint">Position the barcode within the frame</p>
                 </div>
-                <div class="scanner-error" id="scanner-error">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                <button class="rapid-scanner-flash-btn" id="rapid-scanner-flash">
+                    <svg class="flash-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16.5 9.4l-9-5.2M21 6v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H19a2 2 0 0 1 2 2Z"/>
+                        <circle cx="12" cy="13" r="3"/>
                     </svg>
-                    <p id="scanner-error-text">Camera error</p>
-                    <button class="btn btn-secondary" id="scanner-retry-btn">Try Again</button>
+                    <svg class="flash-on" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Scan frame overlay -->
+            <div class="rapid-scanner-overlay">
+                <div class="rapid-scanner-frame">
+                    <div class="rapid-scanner-corner top-left"></div>
+                    <div class="rapid-scanner-corner top-right"></div>
+                    <div class="rapid-scanner-corner bottom-left"></div>
+                    <div class="rapid-scanner-corner bottom-right"></div>
+                    <div class="rapid-scanner-line"></div>
                 </div>
+            </div>
+
+            <!-- Bottom section -->
+            <div class="rapid-scanner-bottom">
+                <!-- Recently scanned books -->
+                <div class="rapid-scanner-recent" id="rapid-scanner-recent">
+                    <div class="rapid-scanner-recent-header">
+                        <span>Recently Scanned</span>
+                    </div>
+                    <div class="rapid-scanner-recent-list" id="rapid-scanner-recent-list"></div>
+                </div>
+
+                <!-- Session count badge -->
+                <div class="rapid-scanner-session">
+                    <div class="rapid-scanner-session-badge" id="rapid-scanner-session-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <span id="rapid-scanner-count">0 books added this session</span>
+                    </div>
+                    <p class="rapid-scanner-hint">Point at a book barcode to scan</p>
+                </div>
+            </div>
+
+            <!-- Scanner toast notifications -->
+            <div class="rapid-scanner-toast" id="rapid-scanner-toast"></div>
+
+            <!-- Error state -->
+            <div class="rapid-scanner-error" id="rapid-scanner-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p id="rapid-scanner-error-text">Camera error</p>
+                <button class="btn btn-secondary" id="rapid-scanner-retry-btn">Try Again</button>
             </div>
         </div>
 
-        <!-- Barcode Preview Modal -->
-        <div id="barcode-preview-modal" class="modal">
+        <!-- Exit Scanner Confirmation Modal -->
+        <div id="scanner-exit-modal" class="modal">
             <div class="modal-backdrop"></div>
             <div class="modal-content modal-sm">
                 <div class="modal-header">
-                    <h2>Book Found</h2>
+                    <h2>Exit Scanning?</h2>
                     <button class="modal-close">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="barcode-preview">
-                        <div class="barcode-preview-cover" id="barcode-preview-cover"></div>
-                        <div class="barcode-preview-info">
-                            <h3 class="barcode-preview-title" id="barcode-preview-title">Book Title</h3>
-                            <p class="barcode-preview-author" id="barcode-preview-author">Author Name</p>
-                        </div>
+                    <p id="scanner-exit-message">You've added 0 books to your library.</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" id="scanner-continue-btn">Continue Scanning</button>
+                        <button class="btn btn-primary" id="scanner-exit-confirm-btn">Done Scanning</button>
                     </div>
-                    <button class="btn btn-primary btn-full" id="barcode-preview-save">Save to List</button>
                 </div>
             </div>
         </div>
@@ -989,6 +1199,22 @@
                 <div class="modal-body">
                     <div class="list-picker" id="list-picker">
                         <!-- Lists will be dynamically inserted -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Club Picker Modal -->
+        <div id="club-picker-modal" class="modal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Add to Club</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-picker" id="club-picker">
+                        <!-- Clubs will be dynamically inserted -->
                     </div>
                 </div>
             </div>
@@ -1370,6 +1596,105 @@
                             Upgrade to Pro
                         </button>
                         <button class="btn btn-ghost btn-full" id="library-limit-dismiss-btn">Maybe Later</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Upgrade Modal -->
+        <div id="premium-upgrade-modal" class="modal">
+            <div class="modal-backdrop" onclick="closePremiumUpgradeModal()"></div>
+            <div class="modal-content modal-sm premium-upgrade-modal-content">
+                <div class="premium-upgrade-modal-body">
+                    <!-- Premium badge with shimmer -->
+                    <div class="premium-badge-container">
+                        <div class="premium-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                        </div>
+                        <div class="premium-badge-shimmer"></div>
+                    </div>
+
+                    <!-- Locked feature indicator -->
+                    <div class="premium-locked-indicator">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <span id="premium-locked-feature">This Feature</span>
+                    </div>
+
+                    <h2 class="premium-upgrade-title">Unlock PageSwipe Pro</h2>
+                    <p class="premium-upgrade-subtitle">Take your reading journey to the next level</p>
+
+                    <!-- Benefits list -->
+                    <div class="premium-benefits-list">
+                        <div class="premium-benefit-item">
+                            <div class="premium-benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                    <line x1="12" y1="6" x2="12" y2="12"/>
+                                    <line x1="9" y1="9" x2="15" y2="9"/>
+                                </svg>
+                            </div>
+                            <div class="premium-benefit-text">
+                                <strong>Unlimited Lists</strong>
+                                <span>Organize your library your way</span>
+                            </div>
+                        </div>
+                        <div class="premium-benefit-item">
+                            <div class="premium-benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <div class="premium-benefit-text">
+                                <strong>Unlimited Book Clubs</strong>
+                                <span>Read together with friends and family</span>
+                            </div>
+                        </div>
+                        <div class="premium-benefit-item">
+                            <div class="premium-benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="20" x2="18" y2="10"/>
+                                    <line x1="12" y1="20" x2="12" y2="4"/>
+                                    <line x1="6" y1="20" x2="6" y2="14"/>
+                                </svg>
+                            </div>
+                            <div class="premium-benefit-text">
+                                <strong>Reading Insights</strong>
+                                <span>Track your progress with detailed stats</span>
+                            </div>
+                        </div>
+                        <div class="premium-benefit-item">
+                            <div class="premium-benefit-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div class="premium-benefit-text">
+                                <strong>Priority Support</strong>
+                                <span>Get help when you need it</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="premium-upgrade-actions">
+                        <button class="btn premium-upgrade-btn" onclick="handlePremiumUpgrade()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                            Upgrade to Pro
+                        </button>
+                        <button class="btn btn-ghost btn-full" onclick="closePremiumUpgradeModal()">Maybe Later</button>
                     </div>
                 </div>
             </div>

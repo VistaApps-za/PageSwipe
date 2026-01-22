@@ -63,7 +63,9 @@ import {
     canAddToLibrary,
     getLibraryLimitInfo,
     refetchBookCover,
-    updateBookCover
+    updateBookCover,
+    getUserReviewForBook,
+    checkIfOwned
 } from './db-service.js';
 
 import {
@@ -74,6 +76,9 @@ import {
     discoverBooks,
     DISCOVERY_GENRES
 } from './book-lookup.js';
+
+import { functions } from './firebase-config.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 
 // ============================================
 // APP STATE
@@ -92,6 +97,7 @@ const state = {
     currentClubMembers: [],
     currentClubActivity: [],
     selectedClubBook: null,
+    selectedBookForClub: null,  // Book being added to a club (for club picker)
     clubTab: 'books',
     discoveryBooks: [],
     discoveryIndex: 0,
@@ -104,6 +110,7 @@ const state = {
     // My Books state
     ownedBooks: [],
     ownedBooksFilter: 'all',  // 'all', 'read', 'unread'
+    ownedBooksGenre: 'all',   // 'all' or specific genre name
     ownedBooksSearch: '',
     libraryTab: 'my-books',   // 'my-books' or 'reading-lists'
     // Library limit state (freemium)
@@ -185,11 +192,12 @@ const elements = {
 
     // Profile
     profileAvatar: document.getElementById('profile-avatar'),
+    profileAvatarInitials: document.getElementById('profile-avatar-initials'),
     profileName: document.getElementById('profile-name'),
     profileEmail: document.getElementById('profile-email'),
     profileBadge: document.getElementById('profile-badge'),
-    profileBooksRead: document.getElementById('profile-books-read'),
-    profileThisYear: document.getElementById('profile-this-year'),
+    profileBooksCount: document.getElementById('profile-books-count'),
+    profileYearCount: document.getElementById('profile-year-count'),
     profileClubsCount: document.getElementById('profile-clubs-count'),
     upgradeCard: document.getElementById('upgrade-card'),
 
@@ -199,6 +207,7 @@ const elements = {
     createClubModal: document.getElementById('create-club-modal'),
     joinClubModal: document.getElementById('join-club-modal'),
     listPickerModal: document.getElementById('list-picker-modal'),
+    clubPickerModal: document.getElementById('club-picker-modal'),
     bookDetailModal: document.getElementById('book-detail-modal'),
     editProfileModal: document.getElementById('edit-profile-modal'),
     settingsModal: document.getElementById('settings-modal'),
@@ -212,6 +221,7 @@ const elements = {
     createClubForm: document.getElementById('create-club-form'),
     joinClubForm: document.getElementById('join-club-form'),
     listPicker: document.getElementById('list-picker'),
+    clubPicker: document.getElementById('club-picker'),
     libraryBookContent: document.getElementById('library-book-content'),
     editProfileForm: document.getElementById('edit-profile-form'),
     reviewForm: document.getElementById('review-form'),
@@ -226,6 +236,7 @@ const elements = {
 document.addEventListener('DOMContentLoaded', () => {
     initAuth();
     initEventListeners();
+    initRapidScannerListeners();
 });
 
 // Refresh data when tab becomes visible again
@@ -310,9 +321,11 @@ function initEventListeners() {
 
     if (mobileMenuToggle) {
         mobileMenuToggle.addEventListener('click', () => {
-            sidebar.classList.add('open');
-            sidebarOverlay.classList.add('show');
-            document.body.style.overflow = 'hidden';
+            if (sidebar && sidebarOverlay) {
+                sidebar.classList.add('open');
+                sidebarOverlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
         });
     }
 
@@ -383,6 +396,9 @@ function initEventListeners() {
 
     document.getElementById('leave-club-btn').addEventListener('click', handleLeaveClub);
     document.getElementById('delete-club-btn').addEventListener('click', handleDeleteClub);
+    document.getElementById('club-share-btn')?.addEventListener('click', shareClub);
+    document.getElementById('list-share-btn')?.addEventListener('click', shareList);
+    document.getElementById('list-revoke-share-btn')?.addEventListener('click', revokeListShare);
 
     // Club tabs
     document.querySelectorAll('.club-tab, .club-tab-new').forEach(tab => {
@@ -424,14 +440,8 @@ function initEventListeners() {
         if (e.key === 'Enter') handleBookSearch();
     });
 
-    // Barcode scanner
+    // Barcode scanner (rapid scan mode)
     document.getElementById('barcode-scan-btn')?.addEventListener('click', openBarcodeScanner);
-    document.getElementById('scanner-close-btn')?.addEventListener('click', closeBarcodeScanner);
-    document.getElementById('scanner-retry-btn')?.addEventListener('click', retryBarcodeScanner);
-    document.querySelector('#scanner-modal .modal-backdrop')?.addEventListener('click', closeBarcodeScanner);
-
-    // Barcode preview
-    document.getElementById('barcode-preview-save')?.addEventListener('click', confirmBarcodePreview);
 
     // Form submissions
     elements.createListForm.addEventListener('submit', handleCreateList);
@@ -554,15 +564,13 @@ function initEventListeners() {
     // Library Limit Warning - Upgrade link
     document.getElementById('library-limit-upgrade-link')?.addEventListener('click', (e) => {
         e.preventDefault();
-        // TODO: Navigate to upgrade/paywall when implemented
-        showToast('Upgrade feature coming soon!', 'info');
+        window.location.href = 'premium.html';
     });
 
     // Library Limit Modal - Buttons
     document.getElementById('library-limit-upgrade-btn')?.addEventListener('click', () => {
         closeAllModals();
-        // TODO: Navigate to upgrade/paywall when implemented
-        showToast('Upgrade feature coming soon!', 'info');
+        window.location.href = 'premium.html';
     });
     document.getElementById('library-limit-dismiss-btn')?.addEventListener('click', () => {
         closeAllModals();
@@ -953,7 +961,8 @@ async function loadHomeData() {
         elements.clubsPreview.querySelectorAll('.club-card-compact').forEach(card => {
             card.addEventListener('click', () => {
                 const clubId = card.dataset.clubId;
-                openClubDetail(clubId);
+                switchView('clubs');
+                loadClubDetail(clubId);
             });
         });
     } else {
@@ -1018,15 +1027,30 @@ async function loadProfileData() {
     // Update profile avatar with photo support
     updateAvatarElement(elements.profileAvatar, photoURL, name);
 
+    // Also update the initials element directly if it exists (new redesigned profile)
+    if (elements.profileAvatarInitials) {
+        elements.profileAvatarInitials.textContent = getInitials(name);
+    }
+
     elements.profileName.textContent = state.userProfile.displayName || 'User';
     elements.profileEmail.textContent = state.user.email;
 
+    // Update badge - handle both old (text only) and new (with .profile-badge-text) structure
+    const badgeTextEl = elements.profileBadge.querySelector('.profile-badge-text');
     if (state.userProfile.isPro) {
-        elements.profileBadge.textContent = 'Pro';
+        if (badgeTextEl) {
+            badgeTextEl.textContent = 'Pro';
+        } else {
+            elements.profileBadge.textContent = 'Pro';
+        }
         elements.profileBadge.classList.add('pro');
         elements.upgradeCard.style.display = 'none';
     } else {
-        elements.profileBadge.textContent = 'Free';
+        if (badgeTextEl) {
+            badgeTextEl.textContent = 'Free';
+        } else {
+            elements.profileBadge.textContent = 'Free';
+        }
         elements.profileBadge.classList.remove('pro');
         elements.upgradeCard.style.display = 'block';
     }
@@ -1034,8 +1058,8 @@ async function loadProfileData() {
     // Load stats
     const statsResult = await getUserStats(state.user.uid);
     if (statsResult.success) {
-        elements.profileBooksRead.textContent = statsResult.data.finished;
-        elements.profileThisYear.textContent = statsResult.data.finished; // TODO: Filter by year
+        elements.profileBooksCount.textContent = statsResult.data.finished;
+        elements.profileYearCount.textContent = statsResult.data.finished; // TODO: Filter by year
         elements.profileClubsCount.textContent = statsResult.data.clubs;
     }
 }
@@ -1113,6 +1137,9 @@ async function loadListDetail(listId) {
     state.currentList = list;
     elements.listDetailTitle.textContent = list.name;
 
+    // Update revoke share button visibility
+    updateRevokeShareButton();
+
     const result = await getListItems(listId);
     if (result.success) {
         elements.listDetailCount.textContent = pluralize(result.data.length, 'book');
@@ -1147,7 +1174,7 @@ async function loadClubDetail(clubId) {
     elements.clubDetailName.textContent = club.name;
 
     // Show description in info bar (hide separator if no description)
-    const descriptionEl = document.getElementById('club-description');
+    const descriptionEl = document.getElementById('club-detail-description');
     const separatorEl = document.querySelector('.club-info-separator');
     if (descriptionEl && separatorEl) {
         if (club.description) {
@@ -1727,6 +1754,147 @@ async function handleDeleteClub() {
     }
 }
 
+async function shareClub() {
+    if (!state.currentClub) return;
+
+    const userName = state.userProfile?.displayName || state.user?.displayName || 'Someone';
+    const shareUrl = `https://pageswipe.tech/club/${state.currentClub.joinCode}`;
+    const shareText = `${userName} has invited you to join their book club "${state.currentClub.name}" on PageSwipe!`;
+
+    // Try native share API first (mobile)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: state.currentClub.name,
+                text: shareText,
+                url: shareUrl
+            });
+            return;
+        } catch (err) {
+            // User cancelled or share failed, fall back to clipboard
+        }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Club link copied to clipboard!', 'success');
+    } catch (err) {
+        // Final fallback: show the URL
+        showToast(`Share: ${shareUrl}`, 'info', 5000);
+    }
+}
+
+async function shareList() {
+    if (!state.currentList) return;
+
+    let publicShareId = state.currentList.publicShareId;
+
+    // If list doesn't have a publicShareId, generate one via Cloud Function
+    if (!publicShareId) {
+        showToast('Generating share link...', 'info');
+        try {
+            const generateShareLink = httpsCallable(functions, 'generateListShareLink');
+            const result = await generateShareLink({ listId: state.currentList.id });
+
+            if (result.data.success) {
+                publicShareId = result.data.shareId;
+                // Update local state
+                state.currentList.publicShareId = publicShareId;
+                state.currentList.isPublic = true;
+                // Update the list in the lists array
+                const listIndex = state.lists.findIndex(l => l.id === state.currentList.id);
+                if (listIndex >= 0) {
+                    state.lists[listIndex].publicShareId = publicShareId;
+                    state.lists[listIndex].isPublic = true;
+                }
+                updateRevokeShareButton();
+            } else {
+                showToast('Failed to generate share link', 'error');
+                return;
+            }
+        } catch (err) {
+            console.error('Error generating share link:', err);
+            showToast('Failed to generate share link', 'error');
+            return;
+        }
+    }
+
+    const userName = state.userProfile?.displayName || state.user?.displayName || 'Someone';
+    const shareUrl = `https://pageswipe.tech/list/${publicShareId}`;
+    const shareText = `${userName} is sharing their reading list "${state.currentList.name}" with you on PageSwipe!`;
+
+    // Try native share API first
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: state.currentList.name,
+                text: shareText,
+                url: shareUrl
+            });
+            return;
+        } catch (err) {
+            // Fall back to clipboard
+        }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('List link copied to clipboard!', 'success');
+    } catch (err) {
+        showToast(`Share: ${shareUrl}`, 'info', 5000);
+    }
+}
+
+async function revokeListShare() {
+    if (!state.currentList || !state.currentList.publicShareId) {
+        showToast('This list is not currently shared', 'info');
+        return;
+    }
+
+    // Confirm with user
+    if (!confirm('Are you sure you want to revoke the share link? Anyone with the current link will no longer be able to view this list.')) {
+        return;
+    }
+
+    try {
+        const revokeShareLink = httpsCallable(functions, 'revokeListShareLink');
+        const result = await revokeShareLink({ listId: state.currentList.id });
+
+        if (result.data.success) {
+            // Update local state
+            state.currentList.publicShareId = null;
+            state.currentList.isPublic = false;
+            // Update the list in the lists array
+            const listIndex = state.lists.findIndex(l => l.id === state.currentList.id);
+            if (listIndex >= 0) {
+                state.lists[listIndex].publicShareId = null;
+                state.lists[listIndex].isPublic = false;
+            }
+            updateRevokeShareButton();
+            showToast('Share link revoked', 'success');
+        } else {
+            showToast('Failed to revoke share link', 'error');
+        }
+    } catch (err) {
+        console.error('Error revoking share link:', err);
+        showToast('Failed to revoke share link', 'error');
+    }
+}
+
+function updateRevokeShareButton() {
+    const revokeBtn = document.getElementById('list-revoke-share-btn');
+    if (revokeBtn && state.currentList) {
+        if (state.currentList.publicShareId) {
+            revokeBtn.style.display = 'inline-flex';
+            revokeBtn.title = 'Revoke share link';
+        } else {
+            revokeBtn.style.display = 'none';
+        }
+    }
+}
+
 async function loadClubMemberReviews(clubId, bookId) {
     const reviewsSection = document.getElementById('club-reviews-section');
     const reviewsContainer = document.getElementById('club-reviews');
@@ -1869,7 +2037,92 @@ function getFilteredOwnedBooks() {
         books = books.filter(book => book.status !== 'read' && book.status !== 'finished');
     }
 
+    // Apply genre filter
+    if (state.ownedBooksGenre && state.ownedBooksGenre !== 'all') {
+        books = books.filter(book => {
+            const normalizedGenre = normalizeGenreForDisplay(book.genre);
+            const normalizedCategories = (book.categories || []).map(normalizeGenreForDisplay);
+            return normalizedGenre === state.ownedBooksGenre ||
+                   normalizedCategories.includes(state.ownedBooksGenre);
+        });
+    }
+
     return books;
+}
+
+// Normalize genre string for display (handles messy API data like "Fiction / Thrillers" -> "Thrillers")
+function normalizeGenreForDisplay(genre) {
+    if (!genre || typeof genre !== 'string') return null;
+    const trimmed = genre.trim();
+    if (!trimmed) return null;
+    const parts = trimmed.split('/');
+    return parts[parts.length - 1].trim();
+}
+
+// Get unique genres from owned books
+function getUniqueGenresFromOwnedBooks() {
+    const genreSet = new Set();
+    for (const book of state.ownedBooks) {
+        const normalizedGenre = normalizeGenreForDisplay(book.genre);
+        if (normalizedGenre) genreSet.add(normalizedGenre);
+        if (book.categories && Array.isArray(book.categories)) {
+            for (const cat of book.categories) {
+                const normalizedCat = normalizeGenreForDisplay(cat);
+                if (normalizedCat) genreSet.add(normalizedCat);
+            }
+        }
+    }
+    return Array.from(genreSet).sort();
+}
+
+// Count books for a specific genre
+function countBooksForGenre(genre) {
+    if (genre === 'all') return state.ownedBooks.length;
+    return state.ownedBooks.filter(book => {
+        const normalizedGenre = normalizeGenreForDisplay(book.genre);
+        const normalizedCategories = (book.categories || []).map(normalizeGenreForDisplay);
+        return normalizedGenre === genre || normalizedCategories.includes(genre);
+    }).length;
+}
+
+// Set genre filter (global for inline onclick handlers)
+window.setMyBooksGenreFilter = function(genre) {
+    state.ownedBooksGenre = genre;
+    renderMyBooks();
+};
+
+// Render genre filter pills
+function renderGenreFilters() {
+    const container = document.getElementById('my-books-genre-filters');
+    if (!container) return;
+    const genres = getUniqueGenresFromOwnedBooks();
+    if (genres.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    const escapeHtml = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    };
+    const escapeAttr = (str) => str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    let html = `
+        <button class="genre-chip ${state.ownedBooksGenre === 'all' ? 'active' : ''}" onclick="setMyBooksGenreFilter('all')">
+            All Genres <span class="genre-chip-count">${state.ownedBooks.length}</span>
+        </button>
+        <div class="genre-divider"></div>
+    `;
+    for (const genre of genres) {
+        const count = countBooksForGenre(genre);
+        const isActive = state.ownedBooksGenre === genre;
+        html += `
+            <button class="genre-chip ${isActive ? 'active' : ''}" onclick="setMyBooksGenreFilter('${escapeAttr(genre)}')">
+                ${escapeHtml(genre)} <span class="genre-chip-count">${count}</span>
+            </button>
+        `;
+    }
+    container.innerHTML = html;
 }
 
 function renderMyBooks() {
@@ -1882,6 +2135,9 @@ function renderMyBooks() {
 
     // Show/hide library limit warning banner
     updateLibraryLimitWarning();
+
+    // Render genre filter pills
+    renderGenreFilters();
 
     // Check if empty
     if (state.ownedBooks.length === 0) {
@@ -2063,9 +2319,17 @@ async function openOwnedBookDetail(bookId) {
                 </div>
 
                 <div class="book-detail-actions" style="margin-top: 1rem;">
+                    ${!isRead && book.status !== 'reading' ? `
+                        <button class="btn btn-primary" onclick="startReadingOwnedBook('${book.id}')">Start Reading</button>
+                    ` : ''}
+                    ${book.status === 'reading' ? `
+                        <button class="btn btn-secondary" onclick="finishOwnedBook('${book.id}')">Mark as Finished</button>
+                    ` : ''}
                     <button class="btn btn-secondary" onclick="toggleReadStatus('${book.id}', ${isRead ? 'false' : 'true'})">
                         ${isRead ? 'Mark as Unread' : 'Mark as Read'}
                     </button>
+                    <button class="btn btn-secondary" onclick="addOwnedBookToList('${book.id}')">Add to List</button>
+                    <button class="btn btn-secondary" onclick="addOwnedBookToClub('${book.id}')">Add to Club</button>
                 </div>
             </div>
         </div>
@@ -2111,6 +2375,185 @@ window.toggleReadStatus = async function(bookId, markAsRead) {
         showToast('Failed to update status', 'error');
     }
 };
+
+// Start reading an owned book
+window.startReadingOwnedBook = async function(bookId) {
+    if (!state.user || !bookId) return;
+
+    const book = state.ownedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    showLoading();
+    const result = await updateItemStatus(bookId, 'reading');
+    hideLoading();
+
+    if (result.success) {
+        showToast('Happy reading!', 'success');
+        closeAllModals();
+        await loadMyBooks();
+        loadHomeData();
+
+        // Post activity to clubs that have this book
+        if (book.isbn) {
+            const userData = {
+                userId: state.user.uid,
+                displayName: state.userProfile?.displayName || state.user.displayName || state.user.email,
+                photoURL: state.userProfile?.photoURL
+            };
+            postActivityToClubsWithBook(
+                book.isbn,
+                book.title,
+                book.coverImageUrl,
+                'startedBook',
+                userData
+            );
+        }
+    } else {
+        showToast('Failed to start reading', 'error');
+    }
+};
+
+// Finish reading an owned book
+window.finishOwnedBook = async function(bookId) {
+    if (!state.user || !bookId) return;
+
+    const book = state.ownedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    showLoading();
+    const result = await updateItemStatus(bookId, 'read');
+    hideLoading();
+
+    if (result.success) {
+        showToast('Congratulations on finishing!', 'success');
+        closeAllModals();
+        await loadMyBooks();
+        loadHomeData();
+
+        // Post activity to clubs that have this book
+        if (book.isbn) {
+            const userData = {
+                userId: state.user.uid,
+                displayName: state.userProfile?.displayName || state.user.displayName || state.user.email,
+                photoURL: state.userProfile?.photoURL
+            };
+            postActivityToClubsWithBook(
+                book.isbn,
+                book.title,
+                book.coverImageUrl,
+                'finishedBook',
+                userData
+            );
+        }
+    } else {
+        showToast('Failed to mark as finished', 'error');
+    }
+};
+
+// Add owned book to a list
+window.addOwnedBookToList = function(bookId) {
+    const book = state.ownedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    // Convert owned book to format expected by list picker
+    state.selectedBook = {
+        isbn: book.isbn,
+        title: book.title,
+        authors: book.authors,
+        coverImageUrl: book.coverImageUrl,
+        description: book.description,
+        pageCount: book.pageCount,
+        genre: book.genre,
+        categories: book.categories
+    };
+
+    closeAllModals();
+    renderListPicker();
+    openModal('list-picker-modal');
+};
+
+// Add owned book to a club
+window.addOwnedBookToClub = async function(bookId) {
+    const book = state.ownedBooks.find(b => b.id === bookId);
+    if (!book) return;
+
+    // Check if user is in any clubs
+    if (!state.clubs || state.clubs.length === 0) {
+        showToast('Join a club first to share books', 'info');
+        return;
+    }
+
+    // Store the book for the club picker
+    state.selectedBookForClub = {
+        isbn: book.isbn,
+        title: book.title,
+        authors: book.authors,
+        coverImageUrl: book.coverImageUrl,
+        description: book.description,
+        pageCount: book.pageCount,
+        genre: book.genre,
+        categories: book.categories
+    };
+
+    closeAllModals();
+    renderClubPicker();
+    openModal('club-picker-modal');
+};
+
+// Render club picker for adding book to club
+function renderClubPicker() {
+    const picker = document.getElementById('club-picker');
+    if (!picker || !state.clubs) return;
+
+    picker.innerHTML = state.clubs.map(club => `
+        <div class="list-picker-item club-picker-item" data-id="${club.id}">
+            <div class="list-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <div class="list-info">
+                <div class="list-name">${club.name}</div>
+                <div class="list-count">${pluralize(club.memberCount || 0, 'member')}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click handlers
+    picker.querySelectorAll('.club-picker-item').forEach(item => {
+        item.addEventListener('click', () => addBookToSelectedClub(item.dataset.id));
+    });
+}
+
+// Add book to selected club
+async function addBookToSelectedClub(clubId) {
+    if (!state.selectedBookForClub || !state.user || !clubId) return;
+
+    const club = state.clubs.find(c => c.id === clubId);
+    if (!club) return;
+
+    showLoading();
+
+    const userData = {
+        userId: state.user.uid,
+        displayName: state.userProfile?.displayName || state.user.displayName || state.user.email,
+        photoURL: state.userProfile?.photoURL
+    };
+
+    const result = await addBookToClub(clubId, state.selectedBookForClub, userData);
+    hideLoading();
+
+    if (result.success) {
+        showToast(`Added to ${club.name}!`, 'success');
+        closeAllModals();
+        state.selectedBookForClub = null;
+    } else {
+        showToast(result.error || 'Failed to add book to club', 'error');
+    }
+}
 
 window.addToMyLibrary = function(bookDataJson) {
     let bookData;
@@ -2759,170 +3202,556 @@ window.dismissDiscoverTutorial = function() {
 };
 
 // ============================================
-// BARCODE SCANNER
+// RAPID BARCODE SCANNER (iOS-matching implementation)
 // ============================================
 
 let html5QrCode = null;
 let isScanning = false;
 
-// Profile photo state
-let pendingPhotoFile = null;
-let photoRemoved = false;
+// Rapid scanner state
+const rapidScannerState = {
+    recentlyScannedISBNs: new Set(),  // Debounce set - ISBNs scanned in last 3 seconds
+    scannedBooks: [],                  // Recently scanned books for display
+    sessionCount: 0,                   // Books added this session
+    isProcessing: false,               // Currently processing a scan
+    isFlashOn: false,                  // Flash/torch state
+    ownedListId: null                  // Cached "My Books" list ID
+};
 
+// Debounce interval in milliseconds (matches iOS: 3 seconds)
+const SCAN_DEBOUNCE_MS = 3000;
+const MAX_RECENT_SCANS = 10;
+const TOAST_DURATION_MS = 2500;
+
+/**
+ * Open the rapid barcode scanner
+ */
 async function openBarcodeScanner() {
-    const scannerModal = document.getElementById('scanner-modal');
-    const scannerError = document.getElementById('scanner-error');
-    const scannerPreview = document.getElementById('scanner-preview');
+    const scanner = document.getElementById('rapid-scanner');
+    const scannerError = document.getElementById('rapid-scanner-error');
+    const scannerPreview = document.getElementById('rapid-scanner-preview');
+    const processingEl = document.getElementById('rapid-scanner-processing');
 
-    // Reset state
+    // Reset state for new session
+    rapidScannerState.recentlyScannedISBNs.clear();
+    rapidScannerState.scannedBooks = [];
+    rapidScannerState.sessionCount = 0;
+    rapidScannerState.isProcessing = false;
+    rapidScannerState.isFlashOn = false;
+    rapidScannerState.ownedListId = null;
+
+    // Reset UI
     scannerError.classList.remove('visible');
+    processingEl.classList.remove('visible');
     scannerPreview.innerHTML = '';
+    updateRapidScannerUI();
 
-    // Open modal
-    scannerModal.classList.add('open');
+    // Open scanner
+    scanner.classList.add('open');
 
-    // Small delay to ensure modal is rendered
+    // Small delay to ensure scanner is rendered
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Check camera support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        handleBarcodeScanError('Camera not supported on this device');
+        handleRapidScannerError('Camera not supported on this device');
         return;
     }
 
     try {
-        html5QrCode = new Html5Qrcode('scanner-preview');
+        html5QrCode = new Html5Qrcode('rapid-scanner-preview', { verbose: false });
         isScanning = true;
 
         await html5QrCode.start(
             { facingMode: 'environment' },
             {
-                fps: 10,
+                fps: 15,  // Higher FPS for rapid scanning
                 qrbox: { width: 280, height: 180 },
-                aspectRatio: 1.5555,
+                aspectRatio: window.innerHeight / window.innerWidth,
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.EAN_13,
                     Html5QrcodeSupportedFormats.EAN_8
-                ]
+                ],
+                disableFlip: false
             },
-            (decodedText) => {
-                // Validate ISBN format
-                const cleaned = decodedText.replace(/[-\s]/g, '');
-                if (/^\d{10}$/.test(cleaned) || /^\d{13}$/.test(cleaned)) {
-                    stopBarcodeScanner();
-                    // Haptic feedback
-                    if (navigator.vibrate) {
-                        navigator.vibrate(100);
-                    }
-                    handleBarcodeScanSuccess(decodedText);
-                }
-            },
-            () => {} // Ignore continuous scan errors
+            handleRapidScan,
+            () => {} // Ignore continuous scan errors - camera keeps running
         );
     } catch (err) {
         isScanning = false;
         if (err.name === 'NotAllowedError') {
-            handleBarcodeScanError('Camera permission denied. Please allow camera access in your browser settings.');
+            handleRapidScannerError('Camera permission denied. Please allow camera access in your browser settings.');
         } else if (err.name === 'NotFoundError') {
-            handleBarcodeScanError('No camera found on this device.');
+            handleRapidScannerError('No camera found on this device.');
         } else {
-            handleBarcodeScanError('Failed to start camera: ' + err.message);
+            handleRapidScannerError('Failed to start camera: ' + err.message);
         }
     }
 }
 
+/**
+ * Handle a barcode scan - continuous scanning with debounce
+ */
+async function handleRapidScan(decodedText) {
+    // Validate ISBN format
+    const isbn = decodedText.replace(/[-\s]/g, '');
+    if (!/^\d{10}$/.test(isbn) && !/^\d{13}$/.test(isbn)) {
+        return; // Not a valid ISBN
+    }
+
+    // Debounce: Skip if we just scanned this ISBN
+    if (rapidScannerState.recentlyScannedISBNs.has(isbn)) {
+        return;
+    }
+
+    // Skip if we're currently processing (prevents rapid duplicate processing)
+    if (rapidScannerState.isProcessing) {
+        return;
+    }
+
+    // Add to recently scanned set
+    rapidScannerState.recentlyScannedISBNs.add(isbn);
+
+    // Remove from set after debounce interval to allow re-scanning
+    setTimeout(() => {
+        rapidScannerState.recentlyScannedISBNs.delete(isbn);
+    }, SCAN_DEBOUNCE_MS);
+
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+
+    // Process the scan
+    rapidScannerState.isProcessing = true;
+    updateProcessingIndicator(true);
+
+    await processRapidScan(isbn);
+}
+
+/**
+ * Process a scanned ISBN - lookup and add to library
+ */
+async function processRapidScan(isbn) {
+    const userId = state.user?.uid;
+    if (!userId) {
+        rapidScannerState.isProcessing = false;
+        updateProcessingIndicator(false);
+        showRapidScannerToast('error', 'Not signed in', 'Please sign in to add books');
+        return;
+    }
+
+    try {
+        // First check if already owned
+        const ownedCheck = await checkIfOwned(userId, isbn);
+        if (ownedCheck.success && ownedCheck.data) {
+            // Book is already owned
+            rapidScannerState.isProcessing = false;
+            updateProcessingIndicator(false);
+            showRapidScannerToast('info', 'Already in Library', ownedCheck.data.title || isbn);
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 50]); // Warning pattern
+            }
+            return;
+        }
+
+        // Check library limit before proceeding
+        const limitCheck = await canAddToLibrary(userId);
+        if (!limitCheck.canAdd) {
+            rapidScannerState.isProcessing = false;
+            updateProcessingIndicator(false);
+            showRapidScannerToast('warning', 'Library Full', `${limitCheck.currentCount}/${limitCheck.limit} books. Upgrade to Pro.`);
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 50]);
+            }
+            return;
+        }
+
+        // Look up the book
+        const lookupResult = await lookupByISBN(isbn);
+        if (!lookupResult.success || !lookupResult.data || lookupResult.data.length === 0) {
+            rapidScannerState.isProcessing = false;
+            updateProcessingIndicator(false);
+            showRapidScannerToast('error', 'Book Not Found', 'Try scanning again');
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]); // Error pattern
+            }
+            return;
+        }
+
+        const book = lookupResult.data[0];
+
+        // Add to recently scanned list with "adding" status
+        const scanResult = {
+            id: Date.now().toString(),
+            book: book,
+            status: 'adding'
+        };
+        rapidScannerState.scannedBooks.unshift(scanResult);
+        if (rapidScannerState.scannedBooks.length > MAX_RECENT_SCANS) {
+            rapidScannerState.scannedBooks.pop();
+        }
+        updateRapidScannerUI();
+
+        // Get or create the owned books list
+        if (!rapidScannerState.ownedListId) {
+            const listsResult = await getUserLists(userId, state.userProfile?.displayName || 'User');
+            if (listsResult.success && listsResult.data) {
+                const ownedList = listsResult.data.find(l => l.type === 'myBooks');
+                if (ownedList) {
+                    rapidScannerState.ownedListId = ownedList.id;
+                }
+            }
+        }
+
+        if (!rapidScannerState.ownedListId) {
+            throw new Error('Could not find My Books list');
+        }
+
+        // Add book to list as owned
+        const addResult = await addBookToList(book, rapidScannerState.ownedListId, userId);
+        if (!addResult.success) {
+            throw new Error(addResult.error || 'Failed to add book');
+        }
+
+        // Mark as owned with physical format (default)
+        const markResult = await markAsOwned(addResult.data.id, 'physical', userId);
+        if (!markResult.success) {
+            console.warn('Failed to mark as owned:', markResult.error);
+        }
+
+        // Update scan result status
+        const scanIndex = rapidScannerState.scannedBooks.findIndex(s => s.id === scanResult.id);
+        if (scanIndex !== -1) {
+            rapidScannerState.scannedBooks[scanIndex].status = 'added';
+        }
+
+        // Update session count
+        rapidScannerState.sessionCount++;
+        updateRapidScannerUI();
+
+        // Success toast
+        showRapidScannerToast('success', 'Added to Library', book.title);
+
+        // Success haptic
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+
+    } catch (error) {
+        console.error('Rapid scan error:', error);
+
+        // Update scan result status to failed if we have one
+        const failedScan = rapidScannerState.scannedBooks.find(s => s.status === 'adding');
+        if (failedScan) {
+            failedScan.status = 'failed';
+            failedScan.error = 'Could not add';
+            updateRapidScannerUI();
+        }
+
+        showRapidScannerToast('error', 'Failed to Add', error.message || 'Please try again');
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
+    } finally {
+        rapidScannerState.isProcessing = false;
+        updateProcessingIndicator(false);
+    }
+}
+
+/**
+ * Update the processing indicator in header
+ */
+function updateProcessingIndicator(isProcessing) {
+    const el = document.getElementById('rapid-scanner-processing');
+    if (el) {
+        el.classList.toggle('visible', isProcessing);
+    }
+}
+
+/**
+ * Update the rapid scanner UI (recent scans, session count)
+ */
+function updateRapidScannerUI() {
+    // Update session count
+    const countEl = document.getElementById('rapid-scanner-count');
+    if (countEl) {
+        const count = rapidScannerState.sessionCount;
+        countEl.textContent = `${count} ${count === 1 ? 'book' : 'books'} added this session`;
+    }
+
+    // Update recently scanned section
+    const recentSection = document.getElementById('rapid-scanner-recent');
+    const recentList = document.getElementById('rapid-scanner-recent-list');
+
+    if (rapidScannerState.scannedBooks.length > 0) {
+        recentSection.classList.add('visible');
+        recentList.innerHTML = rapidScannerState.scannedBooks.map(scan => createRapidScanCard(scan)).join('');
+
+        // Auto-scroll to show newest (leftmost)
+        recentList.scrollLeft = 0;
+    } else {
+        recentSection.classList.remove('visible');
+        recentList.innerHTML = '';
+    }
+}
+
+/**
+ * Create HTML for a recent scan card
+ */
+function createRapidScanCard(scan) {
+    const book = scan.book;
+    const coverHtml = book.coverImageUrl
+        ? `<img src="${book.coverImageUrl}" alt="${book.title}">`
+        : `<div class="no-cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 010-5H20"/></svg></div>`;
+
+    let statusHtml = '';
+    switch (scan.status) {
+        case 'adding':
+            statusHtml = `<div class="rapid-scan-card-status adding"><div class="status-spinner"></div><span>Adding...</span></div>`;
+            break;
+        case 'added':
+            statusHtml = `<div class="rapid-scan-card-status added"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><span>Added</span></div>`;
+            break;
+        case 'already-owned':
+            statusHtml = `<div class="rapid-scan-card-status already-owned"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg><span>Already owned</span></div>`;
+            break;
+        case 'failed':
+            statusHtml = `<div class="rapid-scan-card-status failed"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><span>${scan.error || 'Failed'}</span></div>`;
+            break;
+    }
+
+    return `
+        <div class="rapid-scan-card">
+            <div class="rapid-scan-card-cover">${coverHtml}</div>
+            <div class="rapid-scan-card-info">
+                <div class="rapid-scan-card-title">${book.title || 'Unknown Title'}</div>
+                ${statusHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Show a toast notification in the rapid scanner
+ */
+function showRapidScannerToast(type, title, subtitle) {
+    const container = document.getElementById('rapid-scanner-toast');
+    if (!container) return;
+
+    const iconSvgs = {
+        success: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 5h2v2h-2V7zm0 4h2v6h-2v-6z"/></svg>'
+    };
+
+    const toastId = 'toast-' + Date.now();
+    const toastHtml = `
+        <div class="rapid-scanner-toast-item" id="${toastId}">
+            <div class="rapid-scanner-toast-icon ${type}">${iconSvgs[type]}</div>
+            <div class="rapid-scanner-toast-content">
+                <p class="rapid-scanner-toast-title">${title}</p>
+                ${subtitle ? `<p class="rapid-scanner-toast-subtitle">${subtitle}</p>` : ''}
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', toastHtml);
+
+    // Auto-dismiss
+    setTimeout(() => {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }
+    }, TOAST_DURATION_MS);
+}
+
+/**
+ * Toggle flash/torch
+ */
+async function toggleRapidScannerFlash() {
+    if (!html5QrCode) return;
+
+    try {
+        const flashBtn = document.getElementById('rapid-scanner-flash');
+        rapidScannerState.isFlashOn = !rapidScannerState.isFlashOn;
+
+        // Get video track and apply torch constraint
+        const videoElement = document.querySelector('#rapid-scanner-preview video');
+        if (videoElement && videoElement.srcObject) {
+            const track = videoElement.srcObject.getVideoTracks()[0];
+            if (track) {
+                await track.applyConstraints({
+                    advanced: [{ torch: rapidScannerState.isFlashOn }]
+                });
+            }
+        }
+
+        flashBtn.classList.toggle('active', rapidScannerState.isFlashOn);
+    } catch (err) {
+        console.warn('Flash toggle not supported:', err);
+        rapidScannerState.isFlashOn = false;
+    }
+}
+
+/**
+ * Handle Done button - show confirmation if books were scanned
+ */
+function handleRapidScannerDone() {
+    if (rapidScannerState.sessionCount > 0) {
+        // Show confirmation modal
+        const messageEl = document.getElementById('scanner-exit-message');
+        if (messageEl) {
+            const count = rapidScannerState.sessionCount;
+            messageEl.textContent = `You've added ${count} ${count === 1 ? 'book' : 'books'} to your library.`;
+        }
+        openModal('scanner-exit-modal');
+    } else {
+        // No books scanned, just close
+        closeRapidScanner();
+    }
+}
+
+/**
+ * Close the rapid scanner
+ */
+async function closeRapidScanner() {
+    // Stop the scanner
+    await stopBarcodeScanner();
+
+    // Close scanner view
+    const scanner = document.getElementById('rapid-scanner');
+    scanner.classList.remove('open');
+
+    // Close any open modals
+    closeAllModals();
+
+    // Refresh My Library if books were added
+    if (rapidScannerState.sessionCount > 0) {
+        await loadMyBooks();
+    }
+}
+
+/**
+ * Stop the barcode scanner
+ */
 async function stopBarcodeScanner() {
     if (html5QrCode && isScanning) {
         try {
+            // Turn off flash before stopping
+            if (rapidScannerState.isFlashOn) {
+                const videoElement = document.querySelector('#rapid-scanner-preview video');
+                if (videoElement && videoElement.srcObject) {
+                    const track = videoElement.srcObject.getVideoTracks()[0];
+                    if (track) {
+                        await track.applyConstraints({ advanced: [{ torch: false }] });
+                    }
+                }
+            }
+
             await html5QrCode.stop();
             html5QrCode.clear();
         } catch (err) {
             console.warn('Error stopping scanner:', err);
         }
         isScanning = false;
+        html5QrCode = null;
     }
 }
 
+/**
+ * Close the rapid scanner (alias for backward compatibility)
+ */
 function closeBarcodeScanner() {
-    stopBarcodeScanner();
-    const scannerModal = document.getElementById('scanner-modal');
-    scannerModal.classList.remove('open');
-    const scannerPreview = document.getElementById('scanner-preview');
-    if (scannerPreview) {
-        scannerPreview.innerHTML = '';
-    }
+    closeRapidScanner();
 }
 
-async function retryBarcodeScanner() {
-    const scannerError = document.getElementById('scanner-error');
+/**
+ * Retry scanner after error
+ */
+async function retryRapidScanner() {
+    const scannerError = document.getElementById('rapid-scanner-error');
     scannerError.classList.remove('visible');
     await openBarcodeScanner();
 }
 
-async function handleBarcodeScanSuccess(isbn) {
-    closeBarcodeScanner();
-    closeAllModals();
-
-    showLoading();
-    showToast('Looking up book...', 'info');
-
-    try {
-        const result = await lookupByISBN(isbn);
-        hideLoading();
-
-        if (result.success && result.data && result.data.length > 0) {
-            const book = result.data[0];
-            state.selectedBook = book;
-            showBarcodePreview(book);
-        } else {
-            showToast(`Book not found for ISBN: ${isbn}`, 'error');
-            openModal('add-book-modal');
-        }
-    } catch (error) {
-        hideLoading();
-        console.error('ISBN lookup error:', error);
-        showToast('Failed to look up book. Please try again.', 'error');
-        openModal('add-book-modal');
-    }
-}
-
-function showBarcodePreview(book) {
-    const coverEl = document.getElementById('barcode-preview-cover');
-    const titleEl = document.getElementById('barcode-preview-title');
-    const authorEl = document.getElementById('barcode-preview-author');
-
-    // Set cover image (API returns coverImageUrl)
-    if (book.coverImageUrl) {
-        coverEl.innerHTML = `<img src="${book.coverImageUrl}" alt="${book.title}">`;
-    } else {
-        coverEl.innerHTML = `<div class="no-cover-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 010-5H20"/></svg></div>`;
-    }
-
-    titleEl.textContent = book.title || 'Unknown Title';
-    // API returns authors as an array
-    const authorText = Array.isArray(book.authors) && book.authors.length > 0
-        ? book.authors.join(', ')
-        : 'Unknown Author';
-    authorEl.textContent = authorText;
-
-    openModal('barcode-preview-modal');
-}
-
-function confirmBarcodePreview() {
-    const modal = document.getElementById('barcode-preview-modal');
-    if (modal) {
-        modal.classList.remove('open');
-    }
-    renderListPicker();
-    openModal('list-picker-modal');
-}
-
-function handleBarcodeScanError(errorMessage) {
-    const scannerError = document.getElementById('scanner-error');
-    const scannerErrorText = document.getElementById('scanner-error-text');
+/**
+ * Handle scanner error
+ */
+function handleRapidScannerError(errorMessage) {
+    const scannerError = document.getElementById('rapid-scanner-error');
+    const scannerErrorText = document.getElementById('rapid-scanner-error-text');
     scannerError.classList.add('visible');
     scannerErrorText.textContent = errorMessage;
 }
+
+/**
+ * Initialize rapid scanner event listeners
+ */
+function initRapidScannerListeners() {
+    // Done button
+    const doneBtn = document.getElementById('rapid-scanner-done');
+    if (doneBtn) {
+        doneBtn.addEventListener('click', handleRapidScannerDone);
+    }
+
+    // Flash toggle
+    const flashBtn = document.getElementById('rapid-scanner-flash');
+    if (flashBtn) {
+        flashBtn.addEventListener('click', toggleRapidScannerFlash);
+    }
+
+    // Retry button
+    const retryBtn = document.getElementById('rapid-scanner-retry-btn');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', retryRapidScanner);
+    }
+
+    // Exit modal buttons
+    const continueBtn = document.getElementById('scanner-continue-btn');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', () => {
+            closeAllModals();
+        });
+    }
+
+    const exitConfirmBtn = document.getElementById('scanner-exit-confirm-btn');
+    if (exitConfirmBtn) {
+        exitConfirmBtn.addEventListener('click', () => {
+            closeAllModals();
+            closeRapidScanner();
+        });
+    }
+
+    // Escape key to close scanner
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const scanner = document.getElementById('rapid-scanner');
+            if (scanner && scanner.classList.contains('open')) {
+                handleRapidScannerDone();
+            }
+        }
+    });
+
+    // Close scanner exit modal with close button
+    const exitModalClose = document.querySelector('#scanner-exit-modal .modal-close');
+    if (exitModalClose) {
+        exitModalClose.addEventListener('click', closeAllModals);
+    }
+
+    // Close scanner exit modal with backdrop
+    const exitModalBackdrop = document.querySelector('#scanner-exit-modal .modal-backdrop');
+    if (exitModalBackdrop) {
+        exitModalBackdrop.addEventListener('click', closeAllModals);
+    }
+}
+
+// Profile photo state
+let pendingPhotoFile = null;
+let photoRemoved = false;
 
 // ============================================
 // FORM HANDLERS
@@ -3077,23 +3906,60 @@ async function handleOpenCreateClubModal() {
 }
 
 /**
- * Show premium upgrade prompt
+ * Show premium upgrade prompt modal
  * @param {string} feature - Feature name (e.g., 'custom lists', 'clubs')
  */
 function showPremiumUpgradePrompt(feature) {
-    // Create and show a premium upgrade modal/toast
-    const message = `Upgrade to Pro to create ${feature}! Pro members get unlimited lists and clubs.`;
+    console.log('[Premium] showPremiumUpgradePrompt called for feature:', feature);
+    const modal = document.getElementById('premium-upgrade-modal');
+    console.log('[Premium] Modal element found:', !!modal, modal);
+    if (!modal) {
+        // Fallback if modal doesn't exist
+        console.warn('[Premium] Modal not found, falling back to toast + redirect');
+        showToast(`Upgrade to Pro for unlimited ${feature}!`, 'info', 2000);
+        setTimeout(() => {
+            window.location.href = 'premium.html';
+        }, 500);
+        return;
+    }
 
-    // Check if premium modal exists, otherwise show toast
-    const premiumModal = document.getElementById('premium-modal');
-    if (premiumModal) {
-        document.getElementById('premium-feature-text').textContent = message;
-        openModal('premium-modal');
-    } else {
-        // Fallback to toast with longer duration
-        showToast(message, 'warning', 5000);
+    // Set the locked feature text
+    const featureText = document.getElementById('premium-locked-feature');
+    if (featureText) {
+        const featureLabels = {
+            'custom lists': 'Custom Lists',
+            'lists': 'Custom Lists',
+            'clubs': 'Book Clubs',
+            'reading insights': 'Reading Insights'
+        };
+        featureText.textContent = featureLabels[feature] || feature;
+    }
+
+    console.log('[Premium] Opening modal via openModal()');
+    openModal('premium-upgrade-modal');
+}
+
+/**
+ * Close premium upgrade modal
+ */
+function closePremiumUpgradeModal() {
+    const modal = document.getElementById('premium-upgrade-modal');
+    if (modal) {
+        modal.classList.remove('open');
     }
 }
+
+/**
+ * Handle premium upgrade button click
+ */
+function handlePremiumUpgrade() {
+    closePremiumUpgradeModal();
+    window.location.href = 'premium.html';
+}
+
+// Expose premium modal functions to window
+window.closePremiumUpgradeModal = closePremiumUpgradeModal;
+window.handlePremiumUpgrade = handlePremiumUpgrade;
 
 // Expose premium-gated modal openers to window for inline onclick handlers
 window.handleOpenCreateListModal = handleOpenCreateListModal;
@@ -3192,6 +4058,31 @@ async function openBookDetail(itemId, items) {
         description = await getBookDescription(item.isbn);
     }
 
+    // Fetch user's review if book is finished
+    let userReview = null;
+    if ((item.status === 'read' || item.status === 'finished') && state.user) {
+        const reviewResult = await getUserReviewForBook(state.user.uid, item.isbn || item.id);
+        if (reviewResult.success && reviewResult.data) {
+            userReview = reviewResult.data;
+        }
+    }
+
+    // Build review section HTML if review exists
+    const reviewSection = userReview ? `
+        <div class="book-detail-review">
+            <h4>Your Review</h4>
+            <div class="review-rating">${'★'.repeat(userReview.rating)}${'☆'.repeat(5 - userReview.rating)}</div>
+            ${userReview.reviewText ? `<p class="review-text">"${userReview.reviewText}"</p>` : ''}
+            ${userReview.recommend ? '<span class="recommend-badge">You recommend this book</span>' : ''}
+            <button class="btn btn-secondary btn-sm" onclick="editReview('${item.id}')">Edit Review</button>
+        </div>
+    ` : '';
+
+    // Determine review button text based on whether review exists
+    const reviewButtonHtml = userReview
+        ? `<button class="btn btn-secondary" onclick="editReview('${item.id}')">Edit Review</button>`
+        : `<button class="btn btn-primary" onclick="writeReviewForBook('${item.id}')">Write a Review</button>`;
+
     elements.libraryBookContent.innerHTML = `
         <div class="book-detail">
             <div class="book-detail-cover">
@@ -3222,6 +4113,7 @@ async function openBookDetail(itemId, items) {
                         <span class="progress-text">${item.currentPage || 0} / ${item.pageCount || '?'} pages (${progress}%)</span>
                     </div>
                 ` : ''}
+                ${reviewSection}
                 <p class="book-detail-desc">${description || 'No description available.'}</p>
                 <div class="book-detail-actions">
                     ${item.status === 'unread' ? `
@@ -3232,10 +4124,9 @@ async function openBookDetail(itemId, items) {
                         <button class="btn btn-secondary" onclick="updateProgress('${item.id}', ${item.pageCount || 0})">Update Progress</button>
                         <button class="btn btn-primary" onclick="finishBook('${item.id}')">Mark as Finished</button>
                     ` : ''}
-                    ${item.status === 'read' ? `
-                        <button class="btn btn-primary" onclick="writeReviewForBook('${item.id}')">Write a Review</button>
-                    ` : ''}
+                    ${item.status === 'read' ? reviewButtonHtml : ''}
                     <button class="btn btn-secondary" onclick="openMoveToListModal('${item.id}', '${item.listId}')">Move to List</button>
+                    <button class="btn btn-secondary" onclick="addListItemToClub('${item.id}')">Add to Club</button>
                     <button class="btn btn-outline" onclick="removeBook('${item.id}', '${item.listId}')">Remove</button>
                 </div>
             </div>
@@ -3245,8 +4136,52 @@ async function openBookDetail(itemId, items) {
     openModal('library-book-modal');
 }
 
+// Add a book from a list to a club
+window.addListItemToClub = async (itemId) => {
+    // Get the book item data
+    const result = await getBookItem(itemId);
+    if (!result.success) {
+        showToast('Could not load book data', 'error');
+        return;
+    }
+
+    const book = result.data;
+
+    // Check if user is in any clubs
+    if (!state.clubs || state.clubs.length === 0) {
+        showToast('Join a club first to share books', 'info');
+        return;
+    }
+
+    // Store the book for the club picker
+    state.selectedBookForClub = {
+        isbn: book.isbn,
+        title: book.title,
+        authors: book.authors,
+        coverImageUrl: book.coverImageUrl,
+        description: book.description,
+        pageCount: book.pageCount,
+        genre: book.genre,
+        categories: book.categories
+    };
+
+    closeAllModals();
+    renderClubPicker();
+    openModal('club-picker-modal');
+};
+
 // Allow writing a review for an already-finished book
 window.writeReviewForBook = async (itemId) => {
+    const result = await getBookItem(itemId);
+    if (result.success) {
+        state.finishingBook = result.data;
+        closeAllModals();
+        showReviewModal(result.data);
+    }
+};
+
+// Edit an existing review for a book
+window.editReview = async (itemId) => {
     const result = await getBookItem(itemId);
     if (result.success) {
         state.finishingBook = result.data;

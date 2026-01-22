@@ -217,6 +217,8 @@ interface BookItem {
   coverImageUrl: string | null;
   description: string | null;
   pageCount: number | null;
+  genre: string | null;          // Primary genre from Google Books API
+  categories: string[] | null;   // All categories from Google Books API
   status: ReadingStatus;
   liked: boolean;
   rating: number | null;         // 1-5
@@ -852,6 +854,103 @@ firestore.rules                   # Security rules
 | 2026-01-20 | 1.1.0 | Added background preloading documentation for iOS and Web |
 | 2026-01-20 | 1.2.0 | Removed "Currently Reading" as default list - now handled via ReadingStatus |
 | 2026-01-21 | 1.3.0 | Added ownership fields to BookItem (isOwned, ownedFormat, ownedAt) for My Library feature |
+| 2026-01-22 | 1.4.0 | Added genre/categories fields to BookItem for Library genre filtering feature |
+| 2026-01-22 | 1.5.0 | Added Barcode Scanning documentation - rapid scan mode with continuous scanning, debouncing, recently scanned list |
+
+---
+
+## Barcode Scanning
+
+### Overview
+
+Both iOS and Web support barcode scanning for rapidly adding books to your library. The rapid scanner is designed for bulk book cataloging with continuous scanning capability.
+
+### Features
+
+| Feature | iOS | Web |
+|---------|-----|-----|
+| Single Scan Mode | ✓ | ✓ |
+| Rapid Scan Mode | ✓ | ✓ |
+| Continuous Scanning | ✓ | ✓ |
+| Recently Scanned List | ✓ | ✓ |
+| Session Count Badge | ✓ | ✓ |
+| Flash/Torch Toggle | ✓ | ✓ |
+| Debounce (3 seconds) | ✓ | ✓ |
+| Auto-Add to Library | ✓ | ✓ |
+| Toast Notifications | ✓ | ✓ |
+| Library Limit Check | ✓ | ✓ |
+
+### Rapid Scanner Flow
+
+1. User opens scanner (from Add Book modal or dedicated entry point)
+2. Camera starts in continuous mode (doesn't stop after each scan)
+3. When barcode detected:
+   - Check debounce (skip if same ISBN within 3 seconds)
+   - Look up book via `lookupBook` Cloud Function
+   - Check if already owned
+   - Check library limit (free: 50 books)
+   - Auto-add as owned (physical format)
+   - Show toast notification
+   - Add to "Recently Scanned" list
+4. User can continue scanning or tap "Done"
+
+### Debouncing Logic
+
+```javascript
+// Maintain a Set of recently scanned ISBNs
+const recentlyScannedISBNs = new Set();
+
+function onScan(isbn) {
+  // Skip if already scanned within cooldown period
+  if (recentlyScannedISBNs.has(isbn)) return;
+
+  // Add to set
+  recentlyScannedISBNs.add(isbn);
+
+  // Remove after 3 seconds to allow re-scanning
+  setTimeout(() => recentlyScannedISBNs.delete(isbn), 3000);
+
+  // Process the scan...
+}
+```
+
+### Toast Notification Types
+
+| Type | Title | Subtitle |
+|------|-------|----------|
+| Success | Added to Library | {Book Title} |
+| Already Owned | Already in Library | {Book Title} |
+| Not Found | Book Not Found | Try scanning again |
+| Library Full | Library Full | X/50 books. Upgrade to Pro |
+
+### Recently Scanned List
+
+Shows up to 10 most recently scanned books with:
+- Book cover thumbnail
+- Title (2 line limit)
+- Status indicator:
+  - **Adding...** - Currently looking up/adding
+  - **Added** - Successfully added with checkmark
+  - **Already owned** - Book already in library
+  - **Failed** - Error message
+
+### File Locations
+
+**iOS:**
+- `/PageSwipe/PageSwipe/Views/Library/RapidScanView.swift` - Rapid scanner UI
+- `/PageSwipe/PageSwipe/Views/Library/BarcodeScannerView.swift` - Single scan mode
+
+**Web:**
+- `/PageSwipe Web/app.html` - Scanner modal HTML (lines 1027-1120)
+- `/PageSwipe Web/js/app.js` - Scanner functions (lines 3209-3750)
+- `/PageSwipe Web/css/app.css` - Scanner styles (lines 6597-7232)
+
+### Library (Html5Qrcode for Web)
+
+Web uses the Html5Qrcode library for barcode scanning:
+- Supports EAN-13, ISBN-10, ISBN-13, Code128
+- Requires HTTPS for camera access (or localhost)
+- Falls back gracefully if camera unavailable
 
 ---
 

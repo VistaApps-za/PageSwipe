@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequently Asked Questions | PageSwipe Book Discovery App</title>
+    <meta name="description" content="Find answers to frequently asked questions about PageSwipe. Learn about book discovery, book clubs, premium features, and more.">
+    <meta name="keywords" content="book discovery app, book tracker, reading list, book clubs, book recommendations, find books to read, TBR list, Goodreads alternative">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pageswipe.tech/faq.html">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pageswipe.tech/faq">
+    <meta property="og:title" content="PageSwipe FAQ - Frequently Asked Questions">
+    <meta property="og:description" content="Get answers to common questions about PageSwipe, book discovery, clubs, and Pro features.">
+    <meta property="og:image" content="https://pageswipe.tech/images/og-image.png">
+    <meta property="og:site_name" content="PageSwipe">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pageswipe.tech/faq">
+    <meta name="twitter:title" content="PageSwipe FAQ - Frequently Asked Questions">
+    <meta name="twitter:description" content="Get answers to common questions about PageSwipe, book discovery, clubs, and Pro features.">
+    <meta name="twitter:image" content="https://pageswipe.tech/images/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    <link rel="dns-prefetch" href="https://www.google-analytics.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Schema.org Breadcrumb Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://pageswipe.tech"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "FAQ",
+          "item": "https://pageswipe.tech/faq"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Schema.org FAQ Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is PageSwipe?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PageSwipe is a book discovery and reading companion app that helps you find your next great read using an intuitive swipe interface, similar to how you might browse books in a bookstore."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is PageSwipe free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! PageSwipe is free to download and use. Our free tier includes unlimited book discovery, two default reading lists (Want to Read and Finished), and the ability to join book clubs created by others."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is PageSwipe Pro?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PageSwipe Pro is our premium subscription that unlocks unlimited custom reading lists, the ability to create book clubs, an unlimited My Books library, priority support, and early access to new features."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does book discovery work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Our discovery feature shows you book cards one at a time. Swipe right to add a book to your Want to Read list, or swipe left if you're not interested. The more you swipe, the better our recommendations become."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I create a book club with friends?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! With PageSwipe Pro, you can create unlimited book clubs. Invite friends and family via a shareable link, and everyone can add books, vote on what to read next, and discuss together."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        :root {
+            /* Primary Brand Colors (from BRAND-GUIDELINES.md) */
+            --color-teal: #2DB3A0;
+            --color-coral: #F2786D;
+            --color-navy: #1E3A5F;
+
+            /* Extended Palette */
+            --color-teal-light: #E6F5F3;
+            --color-teal-dark: #238F80;
+            --color-coral-light: #FDEAE8;
+            --color-coral-dark: #D65A4F;
+            --color-navy-light: #E8EDF3;
+
+            --color-primary: #1E3A5F;
+            --color-primary-hover: #162d4a;
+            --color-accent: #F2786D;
+            --color-accent-hover: #D65A4F;
+            --color-teal-hover: #238F80;
+            --gradient-brand: linear-gradient(135deg, #2DB3A0 0%, #F2786D 100%);
+
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-surface-hover: #f1f5f9;
+            --color-border: rgba(30, 58, 95, 0.08);
+
+            --color-text: #1E3A5F;
+            --color-text-secondary: #64748b;
+            --color-text-tertiary: #94a3b8;
+
+            /* Typography */
+            --font-display: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 24px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-primary: #ffffff;
+                --color-primary-hover: #f0f0f0;
+                --color-accent: #F58B82;
+                --color-accent-hover: #F2786D;
+                --color-teal: #3DBFAD;
+                --color-teal-hover: #2DB3A0;
+                --color-coral: #F58B82;
+                --gradient-brand: linear-gradient(135deg, #3DBFAD 0%, #F58B82 100%);
+                --color-bg: #0c1222;
+                --color-surface: #141e33;
+                --color-surface-hover: #1e2d4a;
+                --color-border: rgba(255, 255, 255, 0.08);
+                --color-text: #f1f5f9;
+                --color-text-secondary: #94a3b8;
+                --color-text-tertiary: #64748b;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(250, 250, 250, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .nav {
+                background: rgba(10, 10, 10, 0.8);
+            }
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--color-text);
+        }
+
+        .nav-logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .nav-logo-text {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--color-text);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-secondary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--color-surface-hover);
+            color: var(--color-text);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 0.9375rem;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        /* Hero Section */
+        .faq-hero {
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .faq-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(45, 179, 160, 0.05) 0%, rgba(242, 120, 109, 0.05) 100%);
+            pointer-events: none;
+        }
+
+        .faq-hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .faq-hero-label {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-teal);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .faq-hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+        }
+
+        .faq-hero-description {
+            font-size: 1.125rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        /* Search Box */
+        .faq-search {
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .faq-search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--color-text);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .faq-search-input::placeholder {
+            color: var(--color-text-tertiary);
+        }
+
+        .faq-search-input:focus {
+            border-color: var(--color-teal);
+            box-shadow: 0 0 0 3px rgba(45, 179, 160, 0.1);
+        }
+
+        .faq-search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-tertiary);
+            pointer-events: none;
+        }
+
+        .faq-search-clear {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-tertiary);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .faq-search-clear.visible {
+            opacity: 1;
+        }
+
+        .faq-search-clear:hover {
+            color: var(--color-text-secondary);
+        }
+
+        /* FAQ Content */
+        .faq-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem 6rem;
+        }
+
+        /* Category Navigation */
+        .faq-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            padding: 1rem;
+            background: var(--color-surface);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-border);
+        }
+
+        .faq-category-btn {
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .faq-category-btn:hover {
+            color: var(--color-text);
+            background: var(--color-surface-hover);
+        }
+
+        .faq-category-btn.active {
+            color: white;
+            background: var(--color-primary);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .faq-category-btn.active {
+                color: var(--color-bg);
+            }
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .faq-section-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .faq-section-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--color-teal);
+        }
+
+        /* Accordion */
+        .faq-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .faq-item {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(45, 179, 160, 0.3);
+        }
+
+        .faq-item.open {
+            border-color: var(--color-teal);
+            box-shadow: var(--shadow-md);
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--color-text);
+            text-align: left;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .faq-question:hover {
+            background: var(--color-surface-hover);
+        }
+
+        .faq-question-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--color-text-tertiary);
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.open .faq-question-icon {
+            transform: rotate(180deg);
+            color: var(--color-teal);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-answer-inner {
+            padding: 0 1.5rem 1.5rem;
+            font-size: 0.9375rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+        }
+
+        .faq-answer-inner p {
+            margin-bottom: 0.75rem;
+        }
+
+        .faq-answer-inner p:last-child {
+            margin-bottom: 0;
+        }
+
+        .faq-answer-inner ul {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .faq-answer-inner li {
+            margin-bottom: 0.375rem;
+        }
+
+        .faq-answer-inner a {
+            color: var(--color-teal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .faq-answer-inner a:hover {
+            text-decoration: underline;
+        }
+
+        /* No Results */
+        .faq-no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            display: none;
+        }
+
+        .faq-no-results.visible {
+            display: block;
+        }
+
+        .faq-no-results-icon {
+            width: 64px;
+            height: 64px;
+            color: var(--color-text-tertiary);
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .faq-no-results-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-no-results-text {
+            font-size: 0.9375rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Contact CTA */
+        .faq-contact {
+            text-align: center;
+            padding: 3rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-2xl);
+            margin-top: 3rem;
+        }
+
+        .faq-contact-title {
+            font-family: var(--font-display);
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-contact-text {
+            font-size: 0.9375rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .faq-contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: white;
+            background: var(--gradient-brand);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .faq-contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            padding: 3rem 2rem 1.5rem;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .footer-brand {
+            max-width: 280px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .footer-description {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer-column h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .footer-links a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-text);
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 2rem auto 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8125rem;
+            color: var(--color-text-tertiary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-cta {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                background: none;
+                border: none;
+                padding: 0.5rem;
+            }
+
+            .mobile-menu-btn span {
+                display: block;
+                width: 20px;
+                height: 2px;
+                background: var(--color-text);
+                margin: 5px 0;
+            }
+
+            .faq-hero {
+                padding: 6rem 1.5rem 3rem;
+            }
+
+            .faq-content {
+                padding: 0 1.5rem 4rem;
+            }
+
+            .faq-categories {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding: 0.75rem;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .faq-categories::-webkit-scrollbar {
+                display: none;
+            }
+
+            .faq-category-btn {
+                white-space: nowrap;
+            }
+
+            .faq-question {
+                padding: 1rem 1.25rem;
+                font-size: 0.875rem;
+            }
+
+            .faq-answer-inner {
+                padding: 0 1.25rem 1.25rem;
+                font-size: 0.875rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                max-width: none;
+            }
+
+            .footer-logo {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Animation for accordion */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .faq-section {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .faq-section:nth-child(1) { animation-delay: 0.05s; }
+        .faq-section:nth-child(2) { animation-delay: 0.1s; }
+        .faq-section:nth-child(3) { animation-delay: 0.15s; }
+        .faq-section:nth-child(4) { animation-delay: 0.2s; }
+        .faq-section:nth-child(5) { animation-delay: 0.25s; }
+        .faq-section:nth-child(6) { animation-delay: 0.3s; }
+        .faq-section:nth-child(7) { animation-delay: 0.35s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="index.html" class="nav-logo">
+            <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
+            <span class="nav-logo-text">PageSwipe</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="index.html#features" class="nav-link">Features</a>
+            <a href="index.html#how-it-works" class="nav-link">How It Works</a>
+            <a href="faq.html" class="nav-link active">FAQ</a>
+        </div>
+
+        <div class="nav-cta">
+            <a href="app.html" class="btn btn-ghost">Sign In</a>
+            <a href="app.html" class="btn btn-primary">Get Started</a>
+        </div>
+
+        <button class="mobile-menu-btn" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <!-- Hero -->
+    <section class="faq-hero">
+        <div class="faq-hero-content">
+            <span class="faq-hero-label">Help Center</span>
+            <h1 class="faq-hero-title">Frequently Asked Questions</h1>
+            <p class="faq-hero-description">Find answers to common questions about PageSwipe. Can't find what you're looking for? Feel free to contact our support team.</p>
+
+            <div class="faq-search">
+                <svg class="faq-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" class="faq-search-input" placeholder="Search for answers..." id="faqSearch">
+                <button class="faq-search-clear" id="searchClear" aria-label="Clear search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Content -->
+    <main class="faq-content">
+        <!-- Category Navigation -->
+        <div class="faq-categories">
+            <button class="faq-category-btn active" data-category="all">All Topics</button>
+            <button class="faq-category-btn" data-category="getting-started">Getting Started</button>
+            <button class="faq-category-btn" data-category="discovery">Discovery</button>
+            <button class="faq-category-btn" data-category="book-clubs">Book Clubs</button>
+            <button class="faq-category-btn" data-category="my-books">My Books</button>
+            <button class="faq-category-btn" data-category="premium">Premium</button>
+            <button class="faq-category-btn" data-category="privacy">Privacy</button>
+            <button class="faq-category-btn" data-category="technical">Technical</button>
+        </div>
+
+        <!-- No Results Message -->
+        <div class="faq-no-results" id="noResults">
+            <svg class="faq-no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+                <path d="M8 8l6 6M14 8l-6 6"></path>
+            </svg>
+            <h3 class="faq-no-results-title">No results found</h3>
+            <p class="faq-no-results-text">We couldn't find any questions matching your search. Try different keywords or browse by category.</p>
+            <button class="btn btn-primary" onclick="clearSearch()">Clear Search</button>
+        </div>
+
+        <!-- FAQ Sections -->
+        <div id="faqSections">
+            <!-- Getting Started -->
+            <section class="faq-section" data-category="getting-started">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    Getting Started
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What is PageSwipe?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>PageSwipe is a book discovery and reading companion app that helps you find your next great read. Using our intuitive swipe interface, you can discover books tailored to your tastes, create and join book clubs with friends and family, and track your entire reading journey.</p>
+                                <p>Think of it as your personal reading assistant that learns what you love and helps you connect with other readers.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Is PageSwipe free?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Yes! PageSwipe is free to download and use. Our free tier includes:</p>
+                                <ul>
+                                    <li>Unlimited book discovery with swipe</li>
+                                    <li>Create or join up to 2 book clubs</li>
+                                    <li>Track your reading list</li>
+                                    <li>Basic reading statistics</li>
+                                </ul>
+                                <p>For power readers, we offer PageSwipe Pro with additional features like unlimited book clubs, advanced statistics, and early access to new features.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I create an account?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Creating an account is quick and easy:</p>
+                                <ul>
+                                    <li><strong>On iOS:</strong> Download PageSwipe from the App Store and tap "Get Started." You can sign up with your Apple ID, Google account, or email.</li>
+                                    <li><strong>On Web:</strong> Visit our web app and click "Get Started." Sign up with Google or your email address.</li>
+                                </ul>
+                                <p>Your account syncs automatically across all your devices, so you can seamlessly switch between your phone and computer.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What platforms is PageSwipe available on?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>PageSwipe is currently available on:</p>
+                                <ul>
+                                    <li><strong>iOS:</strong> iPhone and iPad running iOS 16 or later</li>
+                                    <li><strong>Web:</strong> Any modern browser (Chrome, Safari, Firefox, Edge)</li>
+                                </ul>
+                                <p>An Android app is on our roadmap. Sign up for our newsletter to be notified when it launches!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Do I need an account to use PageSwipe?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>You can try the basic discovery feature without an account, but to get the full PageSwipe experience, we recommend creating a free account. With an account you can:</p>
+                                <ul>
+                                    <li>Save books to your reading list</li>
+                                    <li>Create and join book clubs</li>
+                                    <li>Sync your data across devices</li>
+                                    <li>Get personalized recommendations</li>
+                                    <li>Track your reading progress and statistics</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Discovery & Features -->
+            <section class="faq-section" data-category="discovery">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                    </svg>
+                    Discovery & Features
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How does book discovery work?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Our discovery feature shows you book cards one at a time. Each card displays the book cover, title, author, genre, and a brief description. You can:</p>
+                                <ul>
+                                    <li><strong>Swipe right</strong> or tap the heart to add books you're interested in to your reading list</li>
+                                    <li><strong>Swipe left</strong> or tap X to skip books that don't appeal to you</li>
+                                    <li><strong>Tap the card</strong> to see more details about the book</li>
+                                </ul>
+                                <p>The more you swipe, the better our recommendations become!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What does swiping right/left do?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p><strong>Swipe Right (Like):</strong> The book is added to your "Want to Read" list. This also tells our algorithm that you enjoy this type of book, helping improve future recommendations.</p>
+                                <p><strong>Swipe Left (Skip):</strong> The book is passed over and won't appear again. This helps us understand what you're not interested in, so we can show you more relevant books.</p>
+                                <p>Don't worry - if you accidentally swipe the wrong way, you can undo your last swipe by tapping the undo button.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How does PageSwipe learn my preferences?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>PageSwipe learns from several signals:</p>
+                                <ul>
+                                    <li>Books you swipe right on (genres, authors, themes)</li>
+                                    <li>Books you swipe left on (what you're not interested in)</li>
+                                    <li>Books you add to your library manually</li>
+                                    <li>Your reading history and completion rate</li>
+                                    <li>Optional: Your favorite genres selected during onboarding</li>
+                                </ul>
+                                <p>The more you use PageSwipe, the more personalized your recommendations become. Most users see noticeably better recommendations after swiping through 50-100 books.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can I search for specific books?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Yes! While our swipe discovery is great for finding new books, you can also search directly for:</p>
+                                <ul>
+                                    <li>Book titles</li>
+                                    <li>Author names</li>
+                                    <li>ISBN numbers</li>
+                                </ul>
+                                <p>Just tap the search icon in the navigation bar and enter your query. You can then add any book you find to your library or reading list.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I add books to my reading list?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>There are several ways to add books:</p>
+                                <ul>
+                                    <li><strong>Swipe right</strong> during discovery to add to "Want to Read"</li>
+                                    <li><strong>Search</strong> for a specific book and tap "Add to List"</li>
+                                    <li><strong>Scan a barcode</strong> (iOS only) of a physical book</li>
+                                    <li><strong>From a book club</strong> - add the current club read to your list</li>
+                                </ul>
+                                <p>Once added, you can move books between lists: Want to Read, Currently Reading, and Finished.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Book Clubs -->
+            <section class="faq-section" data-category="book-clubs">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Book Clubs
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What are book clubs in PageSwipe?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Book clubs in PageSwipe are private groups where you can read together with friends, family, or colleagues. Each club features:</p>
+                                <ul>
+                                    <li>A shared book that everyone reads together</li>
+                                    <li>Progress tracking so you can see how far along everyone is</li>
+                                    <li>A suggestion queue where members can propose future reads</li>
+                                    <li>Voting on the next book to read</li>
+                                    <li>Activity feed showing member updates</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I create a book club?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Creating a book club takes just a minute:</p>
+                                <ul>
+                                    <li>Go to the Book Clubs tab</li>
+                                    <li>Tap "Create New Club"</li>
+                                    <li>Enter a name for your club</li>
+                                    <li>Optionally add a description and choose a cover image</li>
+                                    <li>Share the invite code with friends!</li>
+                                </ul>
+                                <p>As the creator, you'll be the club admin with the ability to manage members and settings.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I join a book club?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>To join an existing book club, you'll need an invite code from the club admin. Then:</p>
+                                <ul>
+                                    <li>Go to the Book Clubs tab</li>
+                                    <li>Tap "Join Club"</li>
+                                    <li>Enter the 6-character invite code</li>
+                                    <li>You're in! You'll see the club's current book and can start tracking your progress.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can anyone see my book club?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>No, book clubs are completely private by default. Only people with the invite code can join and see the club's content. Book clubs are not searchable or publicly listed.</p>
+                                <p>Club admins can regenerate the invite code at any time if needed, which will invalidate the old code.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What can club members do?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Club members can:</p>
+                                <ul>
+                                    <li>See the current book and track their reading progress</li>
+                                    <li>View other members' progress (percentage complete)</li>
+                                    <li>Suggest books for the club to read next</li>
+                                    <li>Vote on book suggestions</li>
+                                    <li>See club activity and updates</li>
+                                </ul>
+                                <p>Club admins have additional abilities like selecting the current book, managing members, and changing club settings.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- My Books / My Library -->
+            <section class="faq-section" data-category="my-books">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    My Books / My Library
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What is "My Books"?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>"My Books" is your personal library within PageSwipe. It's organized into three main sections:</p>
+                                <ul>
+                                    <li><strong>Want to Read:</strong> Your wishlist of books you'd like to read someday</li>
+                                    <li><strong>Currently Reading:</strong> Books you're actively reading right now</li>
+                                    <li><strong>Finished:</strong> Your completed books - your reading history</li>
+                                </ul>
+                                <p>You can easily move books between sections as you progress through your reading journey.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I scan books into my library?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>On the iOS app, you can use the barcode scanner to quickly add physical books:</p>
+                                <ul>
+                                    <li>Tap the "+" button in My Books</li>
+                                    <li>Select "Scan Barcode"</li>
+                                    <li>Point your camera at the book's ISBN barcode (usually on the back cover)</li>
+                                    <li>The book details will load automatically</li>
+                                    <li>Choose which list to add it to</li>
+                                </ul>
+                                <p>This is perfect for cataloging your home library or adding books while browsing at a bookstore!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Is there a limit to how many books I can add?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>No limits! You can add as many books as you want to your library, whether you're on the free tier or PageSwipe Pro. Build your ultimate reading list without restrictions.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can I track books I've lent to friends?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Yes! For books in your "Finished" section, you can mark them as "Lent Out" and optionally note who has the book. This helps you keep track of your physical book collection.</p>
+                                <p>When the book is returned, simply remove the "Lent Out" status.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Premium / PageSwipe Pro -->
+            <section class="faq-section" data-category="premium">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                    Premium / PageSwipe Pro
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What features are included in Pro?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>PageSwipe Pro unlocks the full experience:</p>
+                                <ul>
+                                    <li><strong>Unlimited book clubs</strong> - Create and join as many as you want</li>
+                                    <li><strong>Advanced statistics</strong> - Detailed reading insights, yearly trends, and genre breakdowns</li>
+                                    <li><strong>Reading goals</strong> - Set and track annual reading goals</li>
+                                    <li><strong>Early access</strong> - Be first to try new features</li>
+                                    <li><strong>Priority support</strong> - Get faster responses from our team</li>
+                                    <li><strong>No ads</strong> - Completely ad-free experience</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How much does Pro cost?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>PageSwipe Pro is available with two billing options:</p>
+                                <ul>
+                                    <li><strong>Monthly:</strong> $4.99/month</li>
+                                    <li><strong>Annual:</strong> $39.99/year (save 33%!)</li>
+                                </ul>
+                                <p>Both options include a 7-day free trial so you can try Pro risk-free.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can I cancel anytime?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Absolutely! You can cancel your Pro subscription at any time. Here's what happens:</p>
+                                <ul>
+                                    <li>You'll keep Pro features until the end of your current billing period</li>
+                                    <li>Your data and library are never deleted</li>
+                                    <li>You'll revert to the free tier features after your subscription ends</li>
+                                    <li>You can re-subscribe anytime to restore Pro features</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>What payment methods do you accept?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Payment methods depend on your platform:</p>
+                                <ul>
+                                    <li><strong>iOS:</strong> All payment is handled through Apple's App Store. You can use any payment method linked to your Apple ID (credit/debit cards, Apple Pay, App Store gift cards).</li>
+                                    <li><strong>Web:</strong> We accept major credit and debit cards (Visa, Mastercard, American Express) through our secure payment processor, Stripe.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Privacy & Data -->
+            <section class="faq-section" data-category="privacy">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Privacy & Data
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Is my reading data private?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Yes, your privacy is our priority. By default:</p>
+                                <ul>
+                                    <li>Your reading list and library are private to you</li>
+                                    <li>Your swipe history is never shared</li>
+                                    <li>We never sell your personal data to third parties</li>
+                                    <li>Book club activity is only visible to club members</li>
+                                </ul>
+                                <p>We only use your reading data to improve your personalized recommendations and never for advertising purposes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Can others see what I'm reading?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Only in limited, controlled situations:</p>
+                                <ul>
+                                    <li><strong>Book clubs:</strong> Club members can see your progress on the club's current book</li>
+                                    <li><strong>Everything else:</strong> Private by default</li>
+                                </ul>
+                                <p>You have full control over what you share. You can leave any book club at any time if you no longer want to share progress with that group.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I delete my account?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>You can delete your account at any time:</p>
+                                <ul>
+                                    <li>Go to Settings > Account > Delete Account</li>
+                                    <li>Confirm your decision</li>
+                                    <li>Your data will be permanently deleted within 30 days</li>
+                                </ul>
+                                <p>Please note: Account deletion is permanent and cannot be undone. You'll lose your reading history, library, and club memberships. If you have an active Pro subscription, please cancel it first to avoid future charges.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technical -->
+            <section class="faq-section" data-category="technical">
+                <h2 class="faq-section-title">
+                    <svg class="faq-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Technical
+                </h2>
+                <div class="faq-accordion">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>The app isn't working, what should I do?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>Try these troubleshooting steps:</p>
+                                <ul>
+                                    <li><strong>Refresh or restart:</strong> Close the app completely and reopen it, or refresh the web page</li>
+                                    <li><strong>Check your connection:</strong> Make sure you have a stable internet connection</li>
+                                    <li><strong>Update the app:</strong> Ensure you're running the latest version from the App Store</li>
+                                    <li><strong>Clear cache:</strong> On web, try clearing your browser cache and cookies for our site</li>
+                                    <li><strong>Try logging out and back in:</strong> This can resolve sync issues</li>
+                                </ul>
+                                <p>If the problem persists, please contact our support team with details about the issue.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>How do I contact support?</span>
+                            <svg class="faq-question-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-inner">
+                                <p>We're here to help! You can reach our support team through:</p>
+                                <ul>
+                                    <li><strong>Email:</strong> support@pageswipe.app</li>
+                                    <li><strong>In-app:</strong> Settings > Help & Support > Contact Us</li>
+                                    <li><strong>Twitter/X:</strong> @PageSwipeApp</li>
+                                </ul>
+                                <p>We typically respond within 24 hours on business days. PageSwipe Pro members receive priority support with faster response times.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="faq-contact">
+            <h3 class="faq-contact-title">Still have questions?</h3>
+            <p class="faq-contact-text">Can't find the answer you're looking for? Our friendly support team is here to help.</p>
+            <a href="mailto:support@pageswipe.app" class="faq-contact-btn">
+                Contact Support
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
+                    <span class="nav-logo-text">PageSwipe</span>
+                </div>
+                <p class="footer-description">Create book clubs with friends and family. Discover your next great read with a simple swipe.</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="index.html#how-it-works">How It Works</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">Download App</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="mailto:support@pageswipe.app">Contact Us</a></li>
+                    <li><a href="#">Help Center</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 PageSwipe. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ Accordion functionality
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const answer = item.querySelector('.faq-answer');
+                const isOpen = item.classList.contains('open');
+
+                // Close all other items in the same section
+                const section = item.closest('.faq-accordion');
+                section.querySelectorAll('.faq-item.open').forEach(openItem => {
+                    if (openItem !== item) {
+                        openItem.classList.remove('open');
+                        openItem.querySelector('.faq-answer').style.maxHeight = '0';
+                    }
+                });
+
+                // Toggle current item
+                if (isOpen) {
+                    item.classList.remove('open');
+                    answer.style.maxHeight = '0';
+                } else {
+                    item.classList.add('open');
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                }
+            });
+        });
+
+        // Category filter
+        const categoryBtns = document.querySelectorAll('.faq-category-btn');
+        const faqSections = document.querySelectorAll('.faq-section');
+
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+
+                // Update active button
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Filter sections
+                faqSections.forEach(section => {
+                    if (category === 'all' || section.dataset.category === category) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+
+                // Clear search when changing category
+                document.getElementById('faqSearch').value = '';
+                document.getElementById('searchClear').classList.remove('visible');
+                document.getElementById('noResults').classList.remove('visible');
+
+                // Reset all items visibility
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('faqSearch');
+        const searchClear = document.getElementById('searchClear');
+        const noResults = document.getElementById('noResults');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+
+            // Show/hide clear button
+            if (query) {
+                searchClear.classList.add('visible');
+            } else {
+                searchClear.classList.remove('visible');
+            }
+
+            // Reset category to "All"
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+
+            // Show all sections when searching
+            faqSections.forEach(section => {
+                section.style.display = 'block';
+            });
+
+            let hasResults = false;
+
+            // Filter FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                const question = item.querySelector('.faq-question span').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer-inner').textContent.toLowerCase();
+
+                if (query === '' || question.includes(query) || answer.includes(query)) {
+                    item.style.display = 'block';
+                    hasResults = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Hide empty sections
+            faqSections.forEach(section => {
+                const visibleItems = section.querySelectorAll('.faq-item[style="display: block"], .faq-item:not([style])');
+                let hasVisibleItems = false;
+                visibleItems.forEach(item => {
+                    if (item.style.display !== 'none') {
+                        hasVisibleItems = true;
+                    }
+                });
+
+                const allItems = section.querySelectorAll('.faq-item');
+                let sectionHasVisible = false;
+                allItems.forEach(item => {
+                    if (item.style.display !== 'none') {
+                        sectionHasVisible = true;
+                    }
+                });
+
+                if (!sectionHasVisible && query) {
+                    section.style.display = 'none';
+                }
+            });
+
+            // Show/hide no results message
+            if (query && !hasResults) {
+                noResults.classList.add('visible');
+            } else {
+                noResults.classList.remove('visible');
+            }
+        });
+
+        searchClear.addEventListener('click', clearSearch);
+
+        function clearSearch() {
+            searchInput.value = '';
+            searchClear.classList.remove('visible');
+            noResults.classList.remove('visible');
+
+            // Show all items and sections
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.style.display = 'block';
+            });
+            faqSections.forEach(section => {
+                section.style.display = 'block';
+            });
+
+            // Reset to "All" category
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+
+            searchInput.focus();
+        }
+
+        // Keyboard support for search
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                clearSearch();
+            }
+        });
+    </script>
+</body>
+</html>

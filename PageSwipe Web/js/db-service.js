@@ -39,11 +39,11 @@ import {
 
 /**
  * Premium limits - matches iOS exactly
- * Free users: 0 custom lists, cannot create clubs (can only join)
+ * Free users: 1 custom list, cannot create clubs (can only join)
  * Pro users: Unlimited lists, unlimited clubs
  */
 const PREMIUM_LIMITS = {
-    FREE_CUSTOM_LISTS: 0,  // Free users get 0 custom lists
+    FREE_CUSTOM_LISTS: 1,  // Free users get 1 custom list
     FREE_CAN_CREATE_CLUBS: false,  // Free users cannot create clubs
     FREE_LIBRARY_LIMIT: 50,  // Free users can have max 50 books in My Library
     FREE_LIBRARY_WARNING_THRESHOLD: 40  // Show warning at 40 books
@@ -97,7 +97,7 @@ export async function canCreateList(userId) {
         if (customListCount >= PREMIUM_LIMITS.FREE_CUSTOM_LISTS) {
             return {
                 allowed: false,
-                reason: 'Upgrade to Pro to create custom lists',
+                reason: 'Upgrade to Pro for unlimited custom lists',
                 isPro: false,
                 currentCount: customListCount,
                 limit: PREMIUM_LIMITS.FREE_CUSTOM_LISTS
@@ -1032,6 +1032,7 @@ export async function createClub(clubData) {
             currentBookCoverUrl: null,
             currentBookStartDate: null,
             memberCount: 1,
+            bookCount: 0,
             booksCompleted: 0,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
@@ -1049,7 +1050,9 @@ export async function createClub(clubData) {
             role: 'owner',
             joinedAt: serverTimestamp(),
             currentBookStatus: 'notStarted',
-            currentBookProgress: null
+            currentBookProgress: null,
+            booksAdded: 0,
+            booksInterested: 0
         });
 
         // Add activity
@@ -1992,6 +1995,32 @@ export async function getUserSettings(userId) {
  */
 export async function addBookReview(reviewData) {
     try {
+        // Check for existing review first
+        const existingResult = await getUserReviewForBook(reviewData.userId, reviewData.bookId);
+
+        if (existingResult.success && existingResult.data) {
+            // Update existing review instead of creating new
+            const existingReview = existingResult.data;
+            const reviewRef = doc(db, 'reviews', existingReview.id);
+
+            await updateDoc(reviewRef, {
+                rating: reviewData.rating,
+                reviewText: reviewData.reviewText || null,
+                recommend: reviewData.recommend || false,
+                updatedAt: serverTimestamp()
+            });
+
+            // Update book rating
+            try {
+                await updateBookRating(reviewData.bookId, reviewData.rating);
+            } catch (ratingError) {
+                console.warn('Could not update book rating:', ratingError.message);
+            }
+
+            return { success: true, data: { ...existingReview, ...reviewData }, updated: true };
+        }
+
+        // No existing review - create new one
         const reviewRef = doc(collection(db, 'reviews'));
         const review = {
             id: reviewRef.id,
@@ -2012,16 +2041,24 @@ export async function addBookReview(reviewData) {
 
         await setDoc(reviewRef, review);
 
-        // Update book's average rating in books collection
-        await updateBookRating(reviewData.bookId, reviewData.rating);
+        // Try to update book rating
+        try {
+            await updateBookRating(reviewData.bookId, reviewData.rating);
+        } catch (ratingError) {
+            console.warn('Could not update book rating:', ratingError.message);
+        }
 
-        // Update user's review count
-        const userRef = doc(db, 'users', reviewData.userId);
-        await updateDoc(userRef, {
-            reviewCount: increment(1)
-        });
+        // Try to update user review count
+        try {
+            const userRef = doc(db, 'users', reviewData.userId);
+            await updateDoc(userRef, {
+                reviewCount: increment(1)
+            });
+        } catch (userError) {
+            console.warn('Could not update user review count:', userError.message);
+        }
 
-        return { success: true, data: review };
+        return { success: true, data: review, updated: false };
     } catch (error) {
         console.error('Add book review error:', error);
         return { success: false, error: error.message };
@@ -2066,6 +2103,32 @@ export async function getUserReviews(userId) {
         return { success: true, data: reviews };
     } catch (error) {
         console.error('Get user reviews error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get user's review for a specific book
+ * @param {string} userId - User ID
+ * @param {string} bookId - Book ID
+ * @returns {Promise<{success: boolean, data: object|null}>}
+ */
+export async function getUserReviewForBook(userId, bookId) {
+    try {
+        const q = query(
+            collection(db, 'reviews'),
+            where('userId', '==', userId),
+            where('bookId', '==', bookId),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            return { success: true, data: null };
+        }
+        const doc = snapshot.docs[0];
+        return { success: true, data: { id: doc.id, ...doc.data() } };
+    } catch (error) {
+        console.error('Get user review for book error:', error);
         return { success: false, error: error.message };
     }
 }

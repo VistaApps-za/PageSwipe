@@ -6,6 +6,26 @@
     <title>PageSwipe - Discover Your Next Great Read</title>
     <meta name="description" content="Discover your next favorite book with a swipe. Create book clubs, track your reading, and share recommendations with friends.">
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pageswipe.tech/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pageswipe.tech/">
+    <meta property="og:title" content="PageSwipe - Discover Your Next Great Read">
+    <meta property="og:description" content="Discover your next favorite book with a swipe. Create book clubs, track your reading, and share recommendations with friends.">
+    <meta property="og:image" content="https://pageswipe.tech/images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="PageSwipe">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pageswipe.tech/">
+    <meta name="twitter:title" content="PageSwipe - Discover Your Next Great Read">
+    <meta name="twitter:description" content="Discover your next favorite book with a swipe. Create book clubs, track your reading, and share recommendations with friends.">
+    <meta name="twitter:image" content="https://pageswipe.tech/images/og-image.png">
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
@@ -598,78 +618,969 @@
             line-height: 1.6;
         }
 
-        /* How It Works */
+        /* How It Works - Premium Redesign */
         .how-it-works {
-            padding: 6rem 2rem;
+            padding: 8rem 2rem;
             background: var(--color-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .how-it-works::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(45, 212, 191, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(249, 115, 86, 0.05) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         .steps {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 3rem;
+            gap: 6rem;
+            position: relative;
+            z-index: 1;
         }
 
         .step {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 4rem;
             align-items: center;
         }
 
         .step:nth-child(even) {
-            direction: rtl;
+            grid-template-columns: 1.2fr 1fr;
         }
 
-        .step:nth-child(even) > * {
-            direction: ltr;
+        .step:nth-child(even) .step-content {
+            order: 2;
         }
 
-        .step-number {
+        .step:nth-child(even) .step-visual-container {
+            order: 1;
+        }
+
+        .step-content {
+            padding: 1rem 0;
+        }
+
+        .step-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: var(--color-primary);
-            color: white;
-            font-size: 1rem;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.1) 0%, rgba(249, 115, 86, 0.1) 100%);
+            border: 1px solid rgba(45, 212, 191, 0.2);
+            border-radius: 100px;
+            font-size: 0.75rem;
             font-weight: 600;
-            border-radius: 50%;
-            margin-bottom: 1rem;
+            color: var(--color-teal);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
         }
 
-        .step-title {
-            font-size: 1.375rem;
-            font-weight: 600;
-            color: var(--color-text);
-            margin-bottom: 0.625rem;
-        }
-
-        .step-description {
-            font-size: 0.9375rem;
-            color: var(--color-text-secondary);
-            line-height: 1.6;
-        }
-
-        .step-visual {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-xl);
-            padding: 2rem;
+        .step-badge-number {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 220px;
+            width: 20px;
+            height: 20px;
+            background: var(--color-teal);
+            color: white;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            border-radius: 50%;
         }
 
-        .step-visual svg {
-            width: 80px;
-            height: 80px;
+        .step-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 0.875rem;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .step-description {
+            font-size: 1.0625rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            max-width: 420px;
+        }
+
+        .step-visual-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 380px;
+        }
+
+        /* Step 1: Sign-In Card Visual */
+        .signin-mockup {
+            position: relative;
+            width: 100%;
+            max-width: 340px;
+            perspective: 1000px;
+        }
+
+        .signin-card {
+            background: var(--color-surface);
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow:
+                0 4px 6px rgba(0, 0, 0, 0.02),
+                0 12px 24px rgba(0, 0, 0, 0.04),
+                0 24px 48px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border);
+            position: relative;
+            overflow: hidden;
+            transform: rotateY(-5deg) rotateX(2deg);
+            transition: transform 0.4s ease;
+        }
+
+        .signin-mockup:hover .signin-card {
+            transform: rotateY(0) rotateX(0);
+        }
+
+        .signin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-teal) 0%, var(--color-accent) 100%);
+        }
+
+        .signin-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .signin-logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-accent) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signin-logo-icon svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+        .signin-logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .signin-title {
+            text-align: center;
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.375rem;
+        }
+
+        .signin-subtitle {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 1.75rem;
+        }
+
+        .signin-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            color: var(--color-text);
+            margin-bottom: 0.75rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .signin-input:focus,
+        .signin-input.focused {
+            border-color: var(--color-teal);
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+        }
+
+        .signin-input::placeholder {
             color: var(--color-text-tertiary);
+        }
+
+        .signin-btn {
+            width: 100%;
+            padding: 0.9375rem;
+            background: linear-gradient(135deg, var(--color-teal) 0%, #26a697 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            margin-bottom: 1.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(45, 212, 191, 0.3);
+        }
+
+        .signin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 212, 191, 0.4);
+        }
+
+        .signin-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .signin-divider::before,
+        .signin-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--color-border);
+        }
+
+        .signin-divider span {
+            font-size: 0.75rem;
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .signin-social {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .signin-social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .signin-social-btn:hover {
+            background: var(--color-surface-hover);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .signin-social-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Floating elements for Step 1 */
+        .signin-float-1,
+        .signin-float-2 {
+            position: absolute;
+            border-radius: 12px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .signin-float-1 {
+            top: 10%;
+            right: -20px;
+            animation-delay: -2s;
+        }
+
+        .signin-float-2 {
+            bottom: 15%;
+            left: -30px;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .float-icon.green {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+        }
+
+        .float-icon.blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+        }
+
+        .float-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .float-text {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+
+        .float-text strong {
+            display: block;
+            font-size: 0.8125rem;
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* Step 2: Swipe Cards Visual */
+        .swipe-mockup {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swipe-card-visual {
+            position: absolute;
+            width: 260px;
+            height: 340px;
+            background: var(--color-surface);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow:
+                0 4px 6px rgba(0, 0, 0, 0.02),
+                0 12px 24px rgba(0, 0, 0, 0.05),
+                0 24px 48px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+        }
+
+        .swipe-card-visual:nth-child(1) {
+            z-index: 3;
+            transform: translateX(0) rotate(0deg);
+        }
+
+        .swipe-card-visual:nth-child(2) {
+            z-index: 2;
+            transform: translateX(30px) rotate(6deg) scale(0.95);
+            opacity: 0.8;
+        }
+
+        .swipe-card-visual:nth-child(3) {
+            z-index: 1;
+            transform: translateX(-30px) rotate(-6deg) scale(0.9);
             opacity: 0.5;
+        }
+
+        .swipe-mockup:hover .swipe-card-visual:nth-child(1) {
+            transform: translateX(-15px) rotate(-3deg);
+        }
+
+        .swipe-mockup:hover .swipe-card-visual:nth-child(2) {
+            transform: translateX(45px) rotate(9deg) scale(0.95);
+        }
+
+        .swipe-card-cover {
+            height: 55%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .swipe-card-cover-gradient {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swipe-card-visual:nth-child(1) .swipe-card-cover-gradient {
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .swipe-card-visual:nth-child(2) .swipe-card-cover-gradient {
+            background: linear-gradient(145deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .swipe-card-visual:nth-child(3) .swipe-card-cover-gradient {
+            background: linear-gradient(145deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .swipe-card-book {
+            width: 90px;
+            height: 130px;
+            background: white;
+            border-radius: 4px;
+            box-shadow:
+                4px 4px 12px rgba(0, 0, 0, 0.2),
+                -2px -2px 8px rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .swipe-card-book-title {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            line-height: 1.3;
+            margin-bottom: 0.25rem;
+        }
+
+        .swipe-card-book-author {
+            font-size: 0.5625rem;
+            color: #64748b;
+        }
+
+        .swipe-card-info {
+            padding: 1rem 1.25rem;
+        }
+
+        .swipe-card-genre {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.1) 0%, rgba(249, 115, 86, 0.1) 100%);
+            color: var(--color-teal);
+            font-size: 0.625rem;
+            font-weight: 600;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.5rem;
+        }
+
+        .swipe-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .swipe-card-author {
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .swipe-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .swipe-card-stars {
+            color: #FCD34D;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .swipe-card-rating-text {
+            font-size: 0.75rem;
+            color: var(--color-text-tertiary);
+        }
+
+        /* Swipe indicators */
+        .swipe-indicator {
+            position: absolute;
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .swipe-indicator.like {
+            top: 20%;
+            right: 10%;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 2px solid #10B981;
+            transform: rotate(15deg);
+        }
+
+        .swipe-indicator.skip {
+            top: 20%;
+            left: 10%;
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 2px solid #EF4444;
+            transform: rotate(-15deg);
+        }
+
+        .swipe-mockup:hover .swipe-indicator.like {
+            opacity: 1;
+        }
+
+        /* Swipe action buttons */
+        .swipe-actions-visual {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .swipe-action-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .swipe-action-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .swipe-action-btn.skip {
+            background: white;
+            border: 2px solid #EF4444;
+            color: #EF4444;
+        }
+
+        .swipe-action-btn.like {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            border: none;
+            color: white;
+        }
+
+        .swipe-action-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Step 3: Community Visual */
+        .community-mockup {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            perspective: 1000px;
+        }
+
+        .community-card {
+            background: var(--color-surface);
+            border-radius: 24px;
+            padding: 1.75rem;
+            box-shadow:
+                0 4px 6px rgba(0, 0, 0, 0.02),
+                0 12px 24px rgba(0, 0, 0, 0.04),
+                0 24px 48px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--color-border);
+            transform: rotateY(5deg) rotateX(2deg);
+            transition: transform 0.4s ease;
+        }
+
+        .community-mockup:hover .community-card {
+            transform: rotateY(0) rotateX(0);
+        }
+
+        .community-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .community-club-info {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+
+        .community-club-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #e85f42 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .community-club-name {
+            font-size: 1.0625rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .community-club-members-count {
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+        }
+
+        .community-badge {
+            padding: 0.375rem 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .community-current-book {
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.08) 0%, rgba(249, 115, 86, 0.08) 100%);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .community-book-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--color-teal);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .community-book-info {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .community-book-cover {
+            width: 60px;
+            height: 85px;
+            background: linear-gradient(145deg, #1e3a5f 0%, #2a4a6f 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.5rem;
+            text-align: center;
+            padding: 0.5rem;
+            line-height: 1.3;
+            font-weight: 500;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+        }
+
+        .community-book-details {
+            flex: 1;
+        }
+
+        .community-book-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.125rem;
+        }
+
+        .community-book-author {
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.625rem;
+        }
+
+        .community-progress {
+            margin-top: 0.5rem;
+        }
+
+        .community-progress-bar {
+            height: 6px;
+            background: rgba(45, 212, 191, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.375rem;
+        }
+
+        .community-progress-fill {
+            height: 100%;
+            width: 68%;
+            background: linear-gradient(90deg, var(--color-teal) 0%, #26a697 100%);
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        .community-progress-text {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+
+        .community-progress-text span {
+            color: var(--color-teal);
+            font-weight: 600;
+        }
+
+        .community-members {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .community-avatars {
+            display: flex;
+            align-items: center;
+        }
+
+        .community-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid var(--color-surface);
+            margin-left: -12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .community-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .community-avatar:nth-child(1) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .community-avatar:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .community-avatar:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .community-avatar:nth-child(4) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .community-avatar.more {
+            background: var(--color-bg);
+            color: var(--color-text-secondary);
+            font-size: 0.6875rem;
+            font-weight: 500;
+        }
+
+        .community-invite-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .community-invite-btn:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .community-invite-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Floating notifications for Step 3 */
+        .community-float-1,
+        .community-float-2 {
+            position: absolute;
+            background: var(--color-surface);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            animation: float 6s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .community-float-1 {
+            top: 5%;
+            right: -15px;
+            animation-delay: -1s;
+        }
+
+        .community-float-2 {
+            bottom: 10%;
+            left: -25px;
+            animation-delay: -3.5s;
+        }
+
+        .community-float-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.6875rem;
+            font-weight: 600;
+        }
+
+        .community-float-1 .community-float-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .community-float-2 .community-float-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .community-float-text {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+
+        .community-float-text strong {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* Responsive for How It Works */
+        @media (max-width: 1024px) {
+            .steps {
+                gap: 5rem;
+            }
+
+            .step {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+
+            .step:nth-child(even) {
+                grid-template-columns: 1fr;
+            }
+
+            .step:nth-child(even) .step-content {
+                order: 1;
+            }
+
+            .step:nth-child(even) .step-visual-container {
+                order: 2;
+            }
+
+            .step-content {
+                text-align: center;
+            }
+
+            .step-description {
+                margin: 0 auto;
+            }
+
+            .step-visual-container {
+                min-height: 340px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .how-it-works {
+                padding: 5rem 1.5rem;
+            }
+
+            .steps {
+                gap: 4rem;
+            }
+
+            .step-title {
+                font-size: 1.5rem;
+            }
+
+            .step-description {
+                font-size: 1rem;
+            }
+
+            .signin-card {
+                padding: 2rem 1.5rem;
+                transform: none;
+            }
+
+            .signin-float-1,
+            .signin-float-2,
+            .community-float-1,
+            .community-float-2 {
+                display: none;
+            }
+
+            .swipe-card-visual {
+                width: 220px;
+                height: 290px;
+            }
+
+            .community-card {
+                transform: none;
+                padding: 1.5rem;
+            }
+
+            .community-avatar {
+                width: 36px;
+                height: 36px;
+            }
         }
 
         /* Testimonials */
@@ -900,14 +1811,7 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .step {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .step:nth-child(even) {
-                direction: ltr;
-            }
+            /* Step responsive handled in how-it-works section */
 
             .footer-content {
                 grid-template-columns: 1fr 1fr;
@@ -972,6 +1876,59 @@
             }
         }
     </style>
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "PageSwipe",
+      "url": "https://pageswipe.tech",
+      "logo": "https://pageswipe.tech/images/WraptIcon.png",
+      "description": "Discover your next favorite book with a swipe. Create book clubs, track your reading, and share recommendations with friends.",
+      "foundingDate": "2024",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Support",
+        "email": "support@pageswipe.tech"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "PageSwipe",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "iOS, Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      },
+      "description": "Discover your next favorite book with a swipe. Create book clubs, track your reading, and share recommendations with friends."
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PageSwipe",
+      "url": "https://pageswipe.tech",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://pageswipe.tech/app?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 </head>
 <body>
     <!-- Navigation -->
@@ -1151,36 +2108,226 @@
         </div>
 
         <div class="steps">
+            <!-- Step 1: Create Account -->
             <div class="step">
                 <div class="step-content">
-                    <div class="step-number">1</div>
+                    <div class="step-badge">
+                        <span class="step-badge-number">1</span>
+                        Quick Setup
+                    </div>
                     <h3 class="step-title">Create your account</h3>
-                    <p class="step-description">Sign up in seconds with your email, Apple ID, or Google account. We'll set up your personal library automatically.</p>
+                    <p class="step-description">Sign up in seconds with your email, Apple ID, or Google account. We'll set up your personal library automatically and you'll be discovering books in no time.</p>
                 </div>
-                <div class="step-visual">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div class="step-visual-container">
+                    <div class="signin-mockup">
+                        <!-- Floating elements -->
+                        <div class="signin-float-1">
+                            <div class="float-icon green">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                            </div>
+                            <div class="float-text">
+                                <strong>Synced</strong>
+                                All devices
+                            </div>
+                        </div>
+                        <div class="signin-float-2">
+                            <div class="float-icon blue">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            </div>
+                            <div class="float-text">
+                                <strong>Secure</strong>
+                                256-bit SSL
+                            </div>
+                        </div>
+
+                        <!-- Sign-in card -->
+                        <div class="signin-card">
+                            <div class="signin-logo">
+                                <div class="signin-logo-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                </div>
+                                <span class="signin-logo-text">PageSwipe</span>
+                            </div>
+                            <h4 class="signin-title">Welcome back</h4>
+                            <p class="signin-subtitle">Sign in to continue your journey</p>
+
+                            <input type="email" class="signin-input focused" placeholder="you@example.com" value="reader@bookclub.com" readonly>
+                            <input type="password" class="signin-input" placeholder="Password" value="••••••••••" readonly>
+
+                            <button class="signin-btn">Continue</button>
+
+                            <div class="signin-divider">
+                                <span>or</span>
+                            </div>
+
+                            <div class="signin-social">
+                                <button class="signin-social-btn">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+                                    Apple
+                                </button>
+                                <button class="signin-social-btn">
+                                    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                    Google
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Step 2: Discover Books -->
             <div class="step">
                 <div class="step-content">
-                    <div class="step-number">2</div>
+                    <div class="step-badge">
+                        <span class="step-badge-number">2</span>
+                        Personalized
+                    </div>
                     <h3 class="step-title">Discover books you'll love</h3>
-                    <p class="step-description">Start swiping through our curated selection. Swipe right on books that interest you, left on ones that don't.</p>
+                    <p class="step-description">Start swiping through our curated selection. Swipe right on books that interest you, left to skip. Our algorithm learns your taste to deliver increasingly perfect recommendations.</p>
                 </div>
-                <div class="step-visual">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <div class="step-visual-container">
+                    <div class="swipe-mockup">
+                        <!-- Swipe indicators -->
+                        <div class="swipe-indicator like">Like</div>
+                        <div class="swipe-indicator skip">Skip</div>
+
+                        <!-- Card stack -->
+                        <div class="swipe-card-visual">
+                            <div class="swipe-card-cover">
+                                <div class="swipe-card-cover-gradient">
+                                    <div class="swipe-card-book">
+                                        <div class="swipe-card-book-title">The Midnight Library</div>
+                                        <div class="swipe-card-book-author">Matt Haig</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="swipe-card-info">
+                                <span class="swipe-card-genre">Fiction</span>
+                                <h4 class="swipe-card-title">The Midnight Library</h4>
+                                <p class="swipe-card-author">by Matt Haig</p>
+                                <div class="swipe-card-rating">
+                                    <span class="swipe-card-stars">★★★★★</span>
+                                    <span class="swipe-card-rating-text">4.9 (12.4k)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="swipe-card-visual">
+                            <div class="swipe-card-cover">
+                                <div class="swipe-card-cover-gradient">
+                                    <div class="swipe-card-book">
+                                        <div class="swipe-card-book-title">Atomic Habits</div>
+                                        <div class="swipe-card-book-author">James Clear</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="swipe-card-info">
+                                <span class="swipe-card-genre">Self-Help</span>
+                                <h4 class="swipe-card-title">Atomic Habits</h4>
+                                <p class="swipe-card-author">by James Clear</p>
+                            </div>
+                        </div>
+
+                        <div class="swipe-card-visual">
+                            <div class="swipe-card-cover">
+                                <div class="swipe-card-cover-gradient">
+                                    <div class="swipe-card-book">
+                                        <div class="swipe-card-book-title">Project Hail Mary</div>
+                                        <div class="swipe-card-book-author">Andy Weir</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="swipe-card-info">
+                                <span class="swipe-card-genre">Sci-Fi</span>
+                                <h4 class="swipe-card-title">Project Hail Mary</h4>
+                                <p class="swipe-card-author">by Andy Weir</p>
+                            </div>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="swipe-actions-visual">
+                            <div class="swipe-action-btn skip">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            </div>
+                            <div class="swipe-action-btn like">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Step 3: Build Community -->
             <div class="step">
                 <div class="step-content">
-                    <div class="step-number">3</div>
+                    <div class="step-badge">
+                        <span class="step-badge-number">3</span>
+                        Social Reading
+                    </div>
                     <h3 class="step-title">Build your community</h3>
-                    <p class="step-description">Create a book club and invite friends with a simple code. Read together, share progress, and enjoy discussions.</p>
+                    <p class="step-description">Create a book club and invite friends with a simple code. Read together, track everyone's progress, and enjoy discussions that bring your favorite stories to life.</p>
                 </div>
-                <div class="step-visual">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <div class="step-visual-container">
+                    <div class="community-mockup">
+                        <!-- Floating notifications -->
+                        <div class="community-float-1">
+                            <div class="community-float-avatar">SM</div>
+                            <div class="community-float-text">
+                                <strong>Sarah</strong> finished Ch. 12
+                            </div>
+                        </div>
+                        <div class="community-float-2">
+                            <div class="community-float-avatar">JT</div>
+                            <div class="community-float-text">
+                                <strong>James</strong> added a note
+                            </div>
+                        </div>
+
+                        <!-- Community card -->
+                        <div class="community-card">
+                            <div class="community-header">
+                                <div class="community-club-info">
+                                    <div class="community-club-icon">📚</div>
+                                    <div>
+                                        <h4 class="community-club-name">Fiction Fanatics</h4>
+                                        <p class="community-club-members-count">8 members</p>
+                                    </div>
+                                </div>
+                                <span class="community-badge">Active</span>
+                            </div>
+
+                            <div class="community-current-book">
+                                <div class="community-book-label">Currently Reading</div>
+                                <div class="community-book-info">
+                                    <div class="community-book-cover">The Midnight Library</div>
+                                    <div class="community-book-details">
+                                        <h5 class="community-book-title">The Midnight Library</h5>
+                                        <p class="community-book-author">by Matt Haig</p>
+                                        <div class="community-progress">
+                                            <div class="community-progress-bar">
+                                                <div class="community-progress-fill"></div>
+                                            </div>
+                                            <p class="community-progress-text">Club average: <span>68%</span> complete</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="community-members">
+                                <div class="community-avatars">
+                                    <div class="community-avatar">SM</div>
+                                    <div class="community-avatar">JT</div>
+                                    <div class="community-avatar">EK</div>
+                                    <div class="community-avatar">AL</div>
+                                    <div class="community-avatar more">+4</div>
+                                </div>
+                                <button class="community-invite-btn">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                                    Invite
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1263,27 +2410,24 @@
                 <ul class="footer-links">
                     <li><a href="#features">Features</a></li>
                     <li><a href="#how-it-works">How It Works</a></li>
-                    <li><a href="#">Pricing</a></li>
-                    <li><a href="#">Download App</a></li>
+                    <li><a href="premium.html">Pricing</a></li>
+                    <li><a href="app.html">Open App</a></li>
                 </ul>
             </div>
 
             <div class="footer-column">
-                <h4>Company</h4>
+                <h4>Support</h4>
                 <ul class="footer-links">
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Careers</a></li>
-                    <li><a href="#">Contact</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="mailto:support@pageswipe.tech">Contact Us</a></li>
                 </ul>
             </div>
 
             <div class="footer-column">
                 <h4>Legal</h4>
                 <ul class="footer-links">
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">Cookie Policy</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
                 </ul>
             </div>
         </div>
