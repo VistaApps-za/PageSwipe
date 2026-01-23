@@ -496,23 +496,75 @@
         .footer {
             background: var(--color-surface);
             border-top: 1px solid var(--color-border);
-            padding: 1.5rem 2rem;
-            text-align: center;
+            padding: 3rem 2rem 1.5rem;
         }
 
-        .footer-text {
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .footer-brand {
+            max-width: 280px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .footer-description {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer-column h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .footer-links a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-text);
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 2rem auto 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
             font-size: 0.8125rem;
             color: var(--color-text-tertiary);
         }
 
-        .footer-text a {
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            transition: color 0.15s;
-        }
-
-        .footer-text a:hover {
-            color: var(--color-teal);
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         /* Responsive */
@@ -592,26 +644,45 @@
             .error-links {
                 gap: 1rem;
             }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                max-width: none;
+            }
+
+            .footer-logo {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="nav">
-        <a href="index.html" class="nav-logo">
+        <a href="/" class="nav-logo">
             <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
             <span class="nav-logo-text">PageSwipe</span>
         </a>
 
         <div class="nav-links">
-            <a href="index.html#features" class="nav-link">Features</a>
-            <a href="index.html#how-it-works" class="nav-link">How It Works</a>
-            <a href="faq.html" class="nav-link">FAQ</a>
+            <a href="/#features" class="nav-link">Features</a>
+            <a href="/#rapidscan" class="nav-link">RapidScan</a>
+            <a href="/premium" class="nav-link">Pricing</a>
+            <a href="/faq" class="nav-link">FAQ</a>
         </div>
 
         <div class="nav-cta">
-            <a href="app.html" class="btn btn-ghost">Sign In</a>
-            <a href="app.html" class="btn btn-primary">Get Started</a>
+            <a href="/app" class="btn btn-ghost">Sign In</a>
+            <a href="/app" class="btn btn-primary">Get Started</a>
         </div>
 
         <button class="mobile-menu-btn" aria-label="Menu">
@@ -622,13 +693,13 @@
 
         <!-- Mobile Menu Dropdown -->
         <div class="mobile-menu">
-            <a href="index.html" class="mobile-menu-link">Home</a>
-            <a href="index.html#features" class="mobile-menu-link">Features</a>
-            <a href="premium.html" class="mobile-menu-link">Premium</a>
-            <a href="faq.html" class="mobile-menu-link">FAQ</a>
+            <a href="/#features" class="mobile-menu-link">Features</a>
+            <a href="/#rapidscan" class="mobile-menu-link">RapidScan</a>
+            <a href="/premium" class="mobile-menu-link">Pricing</a>
+            <a href="/faq" class="mobile-menu-link">FAQ</a>
             <div class="mobile-menu-divider"></div>
-            <a href="app.html" class="mobile-menu-link">Sign In</a>
-            <a href="app.html" class="btn btn-primary mobile-menu-cta">Get Started</a>
+            <a href="/app" class="mobile-menu-link">Sign In</a>
+            <a href="/app" class="btn btn-primary mobile-menu-cta">Get Started</a>
         </div>
     </nav>
 
@@ -650,14 +721,14 @@
             </p>
 
             <div class="error-actions">
-                <a href="index.html" class="btn btn-gradient btn-lg">
+                <a href="/" class="btn btn-gradient btn-lg">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
                     Back to Home
                 </a>
-                <a href="app.html" class="btn btn-primary btn-lg">
+                <a href="/app" class="btn btn-primary btn-lg">
                     Open App
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -666,7 +737,7 @@
             </div>
 
             <div class="error-links">
-                <a href="index.html#features" class="error-link">
+                <a href="/#features" class="error-link">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                         <polyline points="2 17 12 22 22 17"></polyline>
@@ -674,7 +745,7 @@
                     </svg>
                     Features
                 </a>
-                <a href="faq.html" class="error-link">
+                <a href="/faq" class="error-link">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -682,7 +753,7 @@
                     </svg>
                     FAQ
                 </a>
-                <a href="mailto:support@pageswipe.tech" class="error-link">
+                <a href="mailto:support@pageswipe.app" class="error-link">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
@@ -695,11 +766,46 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p class="footer-text">
-            &copy; 2026 PageSwipe. All rights reserved.
-            <a href="privacy.html">Privacy</a> &middot;
-            <a href="terms.html">Terms</a>
-        </p>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
+                    <span class="nav-logo-text">PageSwipe</span>
+                </div>
+                <p class="footer-description">Organize, track, and share your books effortlessly. Your complete reading companion.</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/#rapidscan">RapidScan</a></li>
+                    <li><a href="/premium">Pricing</a></li>
+                    <li><a href="https://apps.apple.com/app/pageswipe/id6758046049" target="_blank" rel="noopener">iOS App</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="/faq">FAQ</a></li>
+                    <li><a href="/android">Android Install</a></li>
+                    <li><a href="mailto:support@pageswipe.app">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 PageSwipe. All rights reserved.</p>
+        </div>
     </footer>
 
     <script>
