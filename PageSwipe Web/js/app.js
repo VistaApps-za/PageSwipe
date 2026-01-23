@@ -40,6 +40,7 @@ import {
     addBookToClub,
     markInterestedInClubBook,
     markNotInterestedInClubBook,
+    removeBookFromClub,
     getActivityText,
     postActivityToClubsWithBook,
     getUserStats,
@@ -65,7 +66,9 @@ import {
     refetchBookCover,
     updateBookCover,
     getUserReviewForBook,
-    checkIfOwned
+    checkIfOwned,
+    findItemByISBN,
+    addBookAsOwned
 } from './db-service.js';
 
 import {
@@ -415,6 +418,8 @@ function initEventListeners() {
     // Club book interest buttons
     document.getElementById('mark-interested-btn').addEventListener('click', handleMarkInterested);
     document.getElementById('mark-not-interested-btn').addEventListener('click', handleMarkNotInterested);
+    document.getElementById('add-club-book-to-list-btn').addEventListener('click', handleAddClubBookToList);
+    document.getElementById('remove-club-book-btn').addEventListener('click', handleRemoveClubBook);
 
     // Club book description Read More toggle
     document.getElementById('club-book-readmore').addEventListener('click', () => {
@@ -440,8 +445,8 @@ function initEventListeners() {
         if (e.key === 'Enter') handleBookSearch();
     });
 
-    // Barcode scanner (rapid scan mode)
-    document.getElementById('barcode-scan-btn')?.addEventListener('click', openBarcodeScanner);
+    // Barcode scanner in Add Book modal (single-scan mode for adding to lists)
+    document.getElementById('barcode-scan-btn')?.addEventListener('click', openSingleScanScanner);
 
     // Form submissions
     elements.createListForm.addEventListener('submit', handleCreateList);
@@ -964,12 +969,14 @@ async function loadHomeData() {
                 ${clubsResult.data.slice(0, 3).map(club => createClubCardCompact(club)).join('')}
             </div>
         `;
-        // Add click handlers for club cards
+        // Add click handlers for club cards with loading state
         elements.clubsPreview.querySelectorAll('.club-card-compact').forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', async () => {
                 const clubId = card.dataset.clubId;
+                card.classList.add('loading');
                 switchView('clubs');
-                loadClubDetail(clubId);
+                await loadClubDetail(clubId);
+                card.classList.remove('loading');
             });
         });
     } else {
@@ -1427,6 +1434,11 @@ function openClubBookDetail(book) {
         notInterestedBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Hide Book';
     }
 
+    // Show Remove button if user added the book or is club owner
+    const removeBtn = document.getElementById('remove-club-book-btn');
+    const canRemove = book.addedBy?.userId === state.user?.uid || state.currentClub?.ownerId === state.user?.uid;
+    removeBtn.style.display = canRemove ? 'inline-flex' : 'none';
+
     openModal('club-book-modal');
 }
 
@@ -1724,6 +1736,60 @@ async function handleMarkNotInterested() {
         await loadClubBooks(state.currentClub.id);
     } else {
         showToast(result.error || 'Failed to hide book', 'error');
+    }
+}
+
+/**
+ * Handle adding a club book to user's personal list
+ */
+function handleAddClubBookToList() {
+    if (!state.selectedClubBook || !state.user?.uid) {
+        showToast('Please select a book first', 'error');
+        return;
+    }
+
+    // Convert club book to the format expected by the list picker
+    const bookData = {
+        title: state.selectedClubBook.title,
+        authors: state.selectedClubBook.authors || [],
+        coverImageUrl: state.selectedClubBook.coverImageUrl || null,
+        isbn: state.selectedClubBook.isbn || null,
+        pageCount: state.selectedClubBook.pageCount || null,
+        description: state.selectedClubBook.description || null,
+        genre: state.selectedClubBook.genre || null,
+        publishedDate: state.selectedClubBook.publishedDate || null
+    };
+
+    // Set as selected book for the list picker
+    state.selectedBook = bookData;
+
+    // Close the club book modal and open the list picker
+    closeAllModals();
+    renderListPicker();
+    openModal('list-picker-modal');
+}
+
+/**
+ * Handle removing a book from the club
+ * Only the user who added the book or the club owner can remove it
+ */
+async function handleRemoveClubBook() {
+    if (!state.currentClub?.id || !state.selectedClubBook?.id || !state.user?.uid) return;
+
+    if (!confirm('Remove this book from the club?')) return;
+
+    const result = await removeBookFromClub(
+        state.currentClub.id,
+        state.selectedClubBook.id,
+        state.user.uid
+    );
+
+    if (result.success) {
+        showToast('Book removed from club', 'success');
+        closeAllModals();
+        await loadClubBooks(state.currentClub.id);
+    } else {
+        showToast(result.error || 'Failed to remove book', 'error');
     }
 }
 
@@ -2295,10 +2361,14 @@ async function openOwnedBookDetail(bookId) {
 
     elements.libraryBookContent.innerHTML = `
         <div class="book-detail-grid">
-            <div class="book-detail-cover">
+            <div class="book-detail-cover" onclick="handleRefetchCover('${book.id}')" title="Tap to find better cover">
                 ${book.coverImageUrl
                     ? `<img src="${book.coverImageUrl}" alt="${book.title}">`
                     : `<div class="book-cover-placeholder">${book.title}</div>`}
+                <div class="cover-refetch-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Find Better Cover
+                </div>
             </div>
             <div class="book-detail-info">
                 <h2 class="book-detail-title">${book.title}</h2>
@@ -2664,9 +2734,14 @@ function renderClubs() {
     elements.clubsEmpty.style.display = 'none';
     elements.clubsGrid.innerHTML = state.clubs.map(club => createClubCard(club)).join('');
 
-    // Add click handlers
+    // Add click handlers with loading state
     elements.clubsGrid.querySelectorAll('.club-card').forEach(card => {
-        card.addEventListener('click', () => loadClubDetail(card.dataset.id));
+        card.addEventListener('click', async () => {
+            // Add loading state to card
+            card.classList.add('loading');
+            await loadClubDetail(card.dataset.id);
+            card.classList.remove('loading');
+        });
     });
 }
 
@@ -3209,11 +3284,12 @@ window.dismissDiscoverTutorial = function() {
 };
 
 // ============================================
-// RAPID BARCODE SCANNER (iOS-matching implementation)
+// BARCODE SCANNER (supports both RapidScan and Single-Scan modes)
 // ============================================
 
 let html5QrCode = null;
 let isScanning = false;
+let scannerMode = 'rapid'; // 'rapid' for bulk scanning, 'single' for one-off scans
 
 // Rapid scanner state
 const rapidScannerState = {
@@ -3221,8 +3297,7 @@ const rapidScannerState = {
     scannedBooks: [],                  // Recently scanned books for display
     sessionCount: 0,                   // Books added this session
     isProcessing: false,               // Currently processing a scan
-    isFlashOn: false,                  // Flash/torch state
-    ownedListId: null                  // Cached "My Books" list ID
+    isFlashOn: false                   // Flash/torch state
 };
 
 // Debounce interval in milliseconds (matches iOS: 3 seconds)
@@ -3234,10 +3309,20 @@ const TOAST_DURATION_MS = 2500;
  * Open the rapid barcode scanner
  */
 async function openBarcodeScanner() {
+    scannerMode = 'rapid';
+
     const scanner = document.getElementById('rapid-scanner');
     const scannerError = document.getElementById('rapid-scanner-error');
     const scannerPreview = document.getElementById('rapid-scanner-preview');
     const processingEl = document.getElementById('rapid-scanner-processing');
+    const scannerTitle = document.querySelector('.rapid-scanner-title > span');
+    const scannerHint = document.querySelector('.rapid-scanner-hint');
+    const sessionBadge = document.getElementById('rapid-scanner-session-badge');
+
+    // Ensure UI is in RapidScan mode
+    if (scannerTitle) scannerTitle.textContent = 'Scan Books';
+    if (scannerHint) scannerHint.textContent = 'Point at a book barcode to scan';
+    if (sessionBadge) sessionBadge.style.display = 'flex';
 
     // Reset state for new session
     rapidScannerState.recentlyScannedISBNs.clear();
@@ -3245,7 +3330,6 @@ async function openBarcodeScanner() {
     rapidScannerState.sessionCount = 0;
     rapidScannerState.isProcessing = false;
     rapidScannerState.isFlashOn = false;
-    rapidScannerState.ownedListId = null;
 
     // Reset UI
     scannerError.classList.remove('visible');
@@ -3266,6 +3350,16 @@ async function openBarcodeScanner() {
     }
 
     try {
+        // Stop any existing scanner first
+        if (html5QrCode) {
+            try {
+                await html5QrCode.stop();
+            } catch (e) {
+                // Ignore stop errors
+            }
+            html5QrCode = null;
+        }
+
         html5QrCode = new Html5Qrcode('rapid-scanner-preview', { verbose: false });
         isScanning = true;
 
@@ -3284,12 +3378,21 @@ async function openBarcodeScanner() {
             handleRapidScan,
             () => {} // Ignore continuous scan errors - camera keeps running
         );
+
+        // Verify video element exists after start
+        const videoEl = scannerPreview.querySelector('video');
+        if (!videoEl) {
+            console.warn('RapidScan: Video element not found after camera start');
+        }
     } catch (err) {
         isScanning = false;
+        console.error('RapidScan camera error:', err);
         if (err.name === 'NotAllowedError') {
             handleRapidScannerError('Camera permission denied. Please allow camera access in your browser settings.');
         } else if (err.name === 'NotFoundError') {
             handleRapidScannerError('No camera found on this device.');
+        } else if (err.name === 'NotReadableError') {
+            handleRapidScannerError('Camera is in use by another app. Please close other camera apps and try again.');
         } else {
             handleRapidScannerError('Failed to start camera: ' + err.message);
         }
@@ -3400,38 +3503,27 @@ async function processRapidScan(isbn) {
         }
         updateRapidScannerUI();
 
-        // Get the default "Want to Read" list to add scanned books to
-        if (!rapidScannerState.ownedListId) {
-            const listsResult = await getUserLists(userId, state.userProfile?.displayName || 'User');
-            if (listsResult.success && listsResult.data) {
-                // First try to find the default "Want to Read" list
-                const wantToReadList = listsResult.data.find(l => l.listType === 'toRead' && l.isDefault);
-                if (wantToReadList) {
-                    rapidScannerState.ownedListId = wantToReadList.id;
-                } else {
-                    // Fallback: use any toRead list
-                    const anyToReadList = listsResult.data.find(l => l.listType === 'toRead');
-                    if (anyToReadList) {
-                        rapidScannerState.ownedListId = anyToReadList.id;
-                    }
-                }
-            }
-        }
+        // Add book as owned (matches iOS DataManager.addBookAsOwned)
+        // This handles: already owned check, existing item marking, or new item creation
+        const addResult = await addBookAsOwned(book, 'physical', userId);
 
-        if (!rapidScannerState.ownedListId) {
-            throw new Error('Could not find a list to add books to. Please create a list first.');
-        }
-
-        // Add book to list as owned
-        const addResult = await addBookToList(book, rapidScannerState.ownedListId, userId);
         if (!addResult.success) {
+            if (addResult.alreadyOwned) {
+                // Book is already owned - show different message
+                const scanIndex = rapidScannerState.scannedBooks.findIndex(s => s.id === scanResult.id);
+                if (scanIndex !== -1) {
+                    rapidScannerState.scannedBooks[scanIndex].status = 'alreadyOwned';
+                }
+                updateRapidScannerUI();
+                showRapidScannerToast('info', 'Already in Library', book.title);
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                rapidScannerState.isProcessing = false;
+                updateProcessingIndicator(false);
+                return;
+            }
             throw new Error(addResult.error || 'Failed to add book');
-        }
-
-        // Mark as owned with physical format (default)
-        const markResult = await markAsOwned(addResult.data.id, 'physical', userId);
-        if (!markResult.success) {
-            console.warn('Failed to mark as owned:', markResult.error);
         }
 
         // Update scan result status
@@ -3643,8 +3735,11 @@ async function closeRapidScanner() {
     // Close any open modals
     closeAllModals();
 
-    // Refresh My Library if books were added
-    if (rapidScannerState.sessionCount > 0) {
+    // Reset scanner UI back to RapidScan mode for next use
+    resetScannerToRapidMode();
+
+    // Refresh My Library if books were added (RapidScan mode only)
+    if (scannerMode === 'rapid' && rapidScannerState.sessionCount > 0) {
         await loadMyBooks();
     }
 }
@@ -3761,6 +3856,158 @@ function initRapidScannerListeners() {
     if (exitModalBackdrop) {
         exitModalBackdrop.addEventListener('click', closeAllModals);
     }
+}
+
+// ============================================
+// SINGLE-SCAN BARCODE (for Add to List feature)
+// ============================================
+
+/**
+ * Open scanner in single-scan mode for adding a book to a list/club
+ * Scans ONE barcode, looks up the book, then shows list picker
+ */
+async function openSingleScanScanner() {
+    scannerMode = 'single';
+
+    const scanner = document.getElementById('rapid-scanner');
+    const scannerError = document.getElementById('rapid-scanner-error');
+    const scannerPreview = document.getElementById('rapid-scanner-preview');
+    const scannerTitle = document.querySelector('.rapid-scanner-title > span');
+    const scannerHint = document.querySelector('.rapid-scanner-hint');
+    const recentSection = document.getElementById('rapid-scanner-recent');
+    const sessionBadge = document.getElementById('rapid-scanner-session-badge');
+
+    // Update UI for single-scan mode
+    if (scannerTitle) scannerTitle.textContent = 'Scan Book';
+    if (scannerHint) scannerHint.textContent = 'Point at a barcode to add to a list';
+    if (recentSection) recentSection.classList.remove('visible');
+    if (sessionBadge) sessionBadge.style.display = 'none';
+
+    // Reset error state
+    scannerError.classList.remove('visible');
+    scannerPreview.innerHTML = '';
+
+    // Close the add-book modal first
+    closeAllModals();
+
+    // Open scanner
+    scanner.classList.add('open');
+
+    // Small delay to ensure scanner is rendered
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check camera support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        handleRapidScannerError('Camera not supported on this device');
+        return;
+    }
+
+    try {
+        // Stop any existing scanner first
+        if (html5QrCode) {
+            try {
+                await html5QrCode.stop();
+            } catch (e) {
+                // Ignore stop errors
+            }
+            html5QrCode = null;
+        }
+
+        html5QrCode = new Html5Qrcode('rapid-scanner-preview', { verbose: false });
+        isScanning = true;
+
+        await html5QrCode.start(
+            { facingMode: 'environment' },
+            {
+                fps: 10,
+                qrbox: { width: 280, height: 180 },
+                aspectRatio: window.innerHeight / window.innerWidth,
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.EAN_13,
+                    Html5QrcodeSupportedFormats.EAN_8
+                ],
+                disableFlip: false
+            },
+            handleSingleScan,
+            () => {} // Ignore continuous scan errors
+        );
+    } catch (err) {
+        isScanning = false;
+        console.error('Single scan camera error:', err);
+        if (err.name === 'NotAllowedError') {
+            handleRapidScannerError('Camera permission denied. Please allow camera access in your browser settings.');
+        } else if (err.name === 'NotFoundError') {
+            handleRapidScannerError('No camera found on this device.');
+        } else if (err.name === 'NotReadableError') {
+            handleRapidScannerError('Camera is in use by another app. Please close other camera apps and try again.');
+        } else {
+            handleRapidScannerError('Failed to start camera: ' + err.message);
+        }
+    }
+}
+
+/**
+ * Handle a single barcode scan - looks up book and opens list picker
+ */
+async function handleSingleScan(decodedText) {
+    // Validate ISBN format
+    const isbn = decodedText.replace(/[-\s]/g, '');
+    if (!/^\d{10}$/.test(isbn) && !/^\d{13}$/.test(isbn)) {
+        return; // Not a valid ISBN
+    }
+
+    // Stop scanning immediately - we only want one scan
+    await stopBarcodeScanner();
+
+    // Close the scanner UI
+    const scanner = document.getElementById('rapid-scanner');
+    scanner.classList.remove('open');
+
+    // Show loading
+    showLoading();
+
+    try {
+        // Look up the book
+        const lookupResult = await lookupByISBN(isbn);
+
+        if (!lookupResult.success || !lookupResult.data || lookupResult.data.length === 0) {
+            hideLoading();
+            showToast('Book not found. Try searching manually.', 'error');
+            openModal('add-book-modal');
+            return;
+        }
+
+        const book = lookupResult.data[0];
+
+        // Set as selected book and show list picker
+        state.selectedBook = book;
+        hideLoading();
+
+        // Render and show list picker
+        renderListPicker();
+        openModal('list-picker-modal');
+
+    } catch (error) {
+        console.error('Single scan lookup error:', error);
+        hideLoading();
+        showToast('Failed to look up book. Try again.', 'error');
+        openModal('add-book-modal');
+    }
+}
+
+/**
+ * Reset scanner UI back to RapidScan mode
+ */
+function resetScannerToRapidMode() {
+    const scannerTitle = document.querySelector('.rapid-scanner-title > span');
+    const scannerHint = document.querySelector('.rapid-scanner-hint');
+    const sessionBadge = document.getElementById('rapid-scanner-session-badge');
+
+    if (scannerTitle) scannerTitle.textContent = 'Scan Books';
+    if (scannerHint) scannerHint.textContent = 'Point at a book barcode to scan';
+    if (sessionBadge) sessionBadge.style.display = 'flex';
+
+    scannerMode = 'rapid';
 }
 
 // Profile photo state
@@ -4099,11 +4346,15 @@ async function openBookDetail(itemId, items) {
 
     elements.libraryBookContent.innerHTML = `
         <div class="book-detail">
-            <div class="book-detail-cover">
+            <div class="book-detail-cover" onclick="handleRefetchCover('${item.id}')" title="Tap to find better cover">
                 ${item.coverImageUrl
             ? `<img src="${item.coverImageUrl}" alt="${item.title}">`
             : `<div class="book-card-cover-text">${item.title}</div>`
         }
+                <div class="cover-refetch-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Find Better Cover
+                </div>
             </div>
             <div class="book-detail-info">
                 <h2>${item.title}</h2>

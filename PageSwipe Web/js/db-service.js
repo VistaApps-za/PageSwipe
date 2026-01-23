@@ -549,6 +549,23 @@ export async function getFinishedBooksCount(userId) {
  */
 export async function addBookToList(bookData, listId, userId) {
     try {
+        // Check if book already exists in this list (by ISBN or title if no ISBN)
+        const identifier = bookData.isbn || bookData.title;
+        if (identifier) {
+            const existingQuery = query(
+                collection(db, 'items'),
+                where('listId', '==', listId),
+                where('userId', '==', userId),
+                where(bookData.isbn ? 'isbn' : 'title', '==', identifier),
+                limit(1)
+            );
+            const existingSnapshot = await getDocs(existingQuery);
+
+            if (!existingSnapshot.empty) {
+                return { success: false, error: 'This book is already in this list' };
+            }
+        }
+
         const itemRef = doc(collection(db, 'items'));
         const item = {
             id: itemRef.id,
@@ -572,6 +589,9 @@ export async function addBookToList(bookData, listId, userId) {
             isOwned: false,
             ownedFormat: null,
             ownedAt: null,
+            // Genre fields for filtering
+            genre: bookData.genre || null,
+            categories: bookData.categories || [],
             addedAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         };
@@ -707,6 +727,107 @@ export async function markAsOwned(itemId, format, userId) {
     }
 }
 
+// Special placeholder list ID for owned books not in a reading list (matches iOS)
+const OWNED_ONLY_LIST_ID = '__owned__';
+
+/**
+ * Add a book directly as owned (for RapidScan)
+ * Matches iOS DataManager.addBookAsOwned behavior exactly
+ * @param {Object} bookData - Book data from lookup
+ * @param {string} format - 'physical' | 'ebook' | 'audiobook'
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, data?: {id: string}, error?: string, alreadyOwned?: boolean}>}
+ */
+export async function addBookAsOwned(bookData, format, userId) {
+    try {
+        if (!userId) {
+            return { success: false, error: 'User ID required' };
+        }
+
+        const isbn = bookData.isbn;
+        if (!isbn) {
+            return { success: false, error: 'ISBN required' };
+        }
+
+        // Check if book already exists as owned by this user
+        const existingOwnedQuery = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isbn', '==', isbn),
+            where('isOwned', '==', true),
+            limit(1)
+        );
+        const existingOwnedSnapshot = await getDocs(existingOwnedQuery);
+
+        if (!existingOwnedSnapshot.empty) {
+            return { success: false, error: 'Already in library', alreadyOwned: true };
+        }
+
+        // Check library limit
+        const limitCheck = await canAddToLibrary(userId);
+        if (!limitCheck.canAdd) {
+            return {
+                success: false,
+                error: limitCheck.reason || 'Library full. Upgrade to Pro for unlimited books.',
+                limitReached: true,
+                currentCount: limitCheck.currentCount,
+                limit: limitCheck.limit
+            };
+        }
+
+        // Check if book exists anywhere for this user (could mark existing item as owned)
+        const existingItemQuery = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isbn', '==', isbn),
+            limit(1)
+        );
+        const existingItemSnapshot = await getDocs(existingItemQuery);
+
+        if (!existingItemSnapshot.empty) {
+            // Book exists in user's library, just mark it as owned
+            const existingDoc = existingItemSnapshot.docs[0];
+            await updateDoc(doc(db, 'items', existingDoc.id), {
+                isOwned: true,
+                ownedFormat: format,
+                ownedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            return { success: true, data: { id: existingDoc.id } };
+        }
+
+        // Book doesn't exist - create new item with special "__owned__" listId
+        const now = serverTimestamp();
+        const itemRef = doc(collection(db, 'items'));
+        const itemData = {
+            listId: OWNED_ONLY_LIST_ID,
+            userId: userId,
+            title: bookData.title || '',
+            author: bookData.author || '',
+            isbn: isbn,
+            coverImageUrl: bookData.coverImageUrl || bookData.thumbnail || '',
+            pageCount: bookData.pageCount || 0,
+            currentPage: 0,
+            status: 'notStarted',
+            isOwned: true,
+            ownedFormat: format,
+            ownedAt: now,
+            // Genre fields for filtering
+            genre: bookData.genre || null,
+            categories: bookData.categories || [],
+            createdAt: now,
+            updatedAt: now
+        };
+
+        await setDoc(itemRef, itemData);
+        return { success: true, data: { id: itemRef.id } };
+
+    } catch (error) {
+        console.error('Add book as owned error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 /**
  * Remove ownership from a book item
  * @param {string} itemId - The item document ID
@@ -818,6 +939,43 @@ export async function checkIfOwned(userId, isbn) {
         return { success: true, data: { id: itemDoc.id, ...itemDoc.data() } };
     } catch (error) {
         console.error('Check if owned error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Find any item with this ISBN for the user (regardless of ownership status)
+ * Used by RapidScan to check if book exists before adding
+ * @param {string} userId - User ID
+ * @param {string} isbn - ISBN to check
+ * @returns {Promise<{success: boolean, data?: Object|null, error?: string}>}
+ */
+export async function findItemByISBN(userId, isbn) {
+    try {
+        if (!userId) {
+            return { success: false, error: 'User ID required' };
+        }
+        if (!isbn) {
+            return { success: false, error: 'ISBN required' };
+        }
+
+        // Query items with this ISBN for the user (any ownership status)
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('isbn', '==', isbn),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, data: null };
+        }
+
+        const itemDoc = snapshot.docs[0];
+        return { success: true, data: { id: itemDoc.id, ...itemDoc.data() } };
+    } catch (error) {
+        console.error('Find item by ISBN error:', error);
         return { success: false, error: error.message };
     }
 }
@@ -1518,6 +1676,53 @@ export async function addBookToClub(clubId, bookData, userData) {
         return { success: true };
     } catch (error) {
         console.error('Add book to club error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Remove a book from a club
+ * Only the user who added the book or the club owner can remove it
+ * @param {string} clubId - Club ID
+ * @param {string} bookId - Club book document ID
+ * @param {string} userId - User requesting the removal
+ */
+export async function removeBookFromClub(clubId, bookId, userId) {
+    try {
+        const bookRef = doc(db, 'clubs', clubId, 'books', bookId);
+        const bookDoc = await getDoc(bookRef);
+
+        if (!bookDoc.exists()) {
+            return { success: false, error: 'Book not found' };
+        }
+
+        const bookData = bookDoc.data();
+
+        // Check if user is the one who added the book
+        if (bookData.addedBy?.userId !== userId) {
+            // Check if user is the club owner
+            const clubDoc = await getDoc(doc(db, 'clubs', clubId));
+            if (!clubDoc.exists() || clubDoc.data().ownerId !== userId) {
+                return { success: false, error: 'Only the person who added this book or the club owner can remove it' };
+            }
+        }
+
+        // Delete the book
+        await deleteDoc(bookRef);
+
+        // Update club book count
+        try {
+            await updateDoc(doc(db, 'clubs', clubId), {
+                bookCount: increment(-1),
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            console.log('Could not update club bookCount:', e.code);
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Remove book from club error:', error);
         return { success: false, error: error.message };
     }
 }
