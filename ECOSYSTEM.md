@@ -856,6 +856,7 @@ firestore.rules                   # Security rules
 | 2026-01-21 | 1.3.0 | Added ownership fields to BookItem (isOwned, ownedFormat, ownedAt) for My Library feature |
 | 2026-01-22 | 1.4.0 | Added genre/categories fields to BookItem for Library genre filtering feature |
 | 2026-01-22 | 1.5.0 | Added Barcode Scanning documentation - rapid scan mode with continuous scanning, debouncing, recently scanned list |
+| 2026-01-23 | 1.6.0 | Added Development Workflow section - Git branching strategy, Firebase preview channels, version tagging |
 
 ---
 
@@ -951,6 +952,81 @@ Web uses the Html5Qrcode library for barcode scanning:
 - Supports EAN-13, ISBN-10, ISBN-13, Code128
 - Requires HTTPS for camera access (or localhost)
 - Falls back gracefully if camera unavailable
+
+---
+
+## Development Workflow
+
+### Branch Strategy
+
+```
+main (production - live at pageswipe.tech)
+  │
+  └── develop (integration branch for next release)
+        │
+        ├── feature/async-rapidscan
+        ├── feature/new-feature-name
+        └── fix/bug-description
+```
+
+| Branch | Purpose | Deploys To |
+|--------|---------|------------|
+| `main` | Production code, always stable | pageswipe.tech (live) |
+| `develop` | Next release integration | Preview channels |
+| `feature/*` | Individual features | Local/Preview |
+| `fix/*` | Bug fixes | Local/Preview |
+
+### Workflow
+
+1. **New Feature:**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/feature-name
+   # ... make changes ...
+   git commit -m "Add feature description"
+   git push origin feature/feature-name
+   # Create PR to develop
+   ```
+
+2. **Testing with Firebase Preview Channels:**
+   ```bash
+   # Deploy to a preview URL (not production)
+   firebase hosting:channel:deploy staging
+   # Returns: pageswipe--staging-abc123.web.app
+   ```
+
+3. **Release to Production:**
+   ```bash
+   git checkout main
+   git merge develop
+   git tag -a v1.x -m "Release description"
+   git push origin main --tags
+   firebase deploy --only hosting
+   ```
+
+### Version Tags
+
+| Tag | Description |
+|-----|-------------|
+| v1.0 | Initial MVP release (2026-01-23) |
+
+### Firebase Preview Channels
+
+Preview channels create temporary URLs for testing without affecting production:
+
+```bash
+# Create/update a preview channel
+firebase hosting:channel:deploy <channel-name>
+
+# List active channels
+firebase hosting:channel:list
+
+# Delete a channel
+firebase hosting:channel:delete <channel-name>
+```
+
+Preview URLs expire after 7 days by default.
 
 ---
 

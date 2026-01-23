@@ -20,15 +20,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/WraptIcon.png">
+    <link rel="manifest" href="manifest.json">
 
-    <!-- Fonts -->
+    <!-- Fonts - non-render-blocking -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
     <link rel="stylesheet" href="css/app.css">
 </head>
@@ -122,12 +125,37 @@
                                 <label for="signin-password">Password</label>
                                 <input type="password" id="signin-password" placeholder="Enter your password" required>
                             </div>
+                            <div class="auth-forgot">
+                                <a href="#" id="show-forgot-password">Forgot password?</a>
+                            </div>
                             <button type="submit" class="btn btn-primary btn-full">Sign In</button>
                         </form>
 
                         <p class="auth-switch">
                             Don't have an account? <a href="#" id="show-signup">Create one</a>
                         </p>
+                    </div>
+
+                    <!-- Forgot Password Form -->
+                    <div id="forgot-password-form" class="auth-form" style="display: none;">
+                        <h1 class="auth-title">Reset password</h1>
+                        <p class="auth-subtitle">Enter your email and we'll send you a link to reset your password</p>
+
+                        <form id="forgot-password-email-form">
+                            <div class="form-group">
+                                <label for="forgot-email">Email</label>
+                                <input type="email" id="forgot-email" placeholder="you@example.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+                        </form>
+
+                        <p class="auth-switch">
+                            Remember your password? <a href="#" id="back-to-signin">Sign in</a>
+                        </p>
+
+                        <div id="reset-success" class="auth-success">
+                            Password reset email sent. Check your inbox.
+                        </div>
                     </div>
 
                     <!-- Sign Up Form -->
@@ -180,18 +208,10 @@
         <div id="main-app" class="main-app" style="display: none;">
             <!-- Mobile Header -->
             <header class="mobile-header">
-                <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Open menu">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
                 <div class="mobile-logo">
                     <img src="images/WraptIcon.png" alt="PageSwipe">
                     <span>PageSwipe</span>
                 </div>
-                <div style="width: 40px;"></div>
             </header>
 
             <!-- Sidebar Overlay -->
@@ -1079,27 +1099,33 @@
 
             <!-- Header -->
             <div class="rapid-scanner-header">
-                <button class="rapid-scanner-done-btn" id="rapid-scanner-done">Done</button>
-                <div class="rapid-scanner-title">
-                    <span>Scan Books</span>
-                    <div class="rapid-scanner-processing" id="rapid-scanner-processing">
-                        <div class="rapid-scanner-processing-spinner"></div>
-                        <span>Looking up...</span>
+                <!-- Left side: Title centered -->
+                <div class="rapid-scanner-header-left">
+                    <div class="rapid-scanner-title">
+                        <span>Scan Books</span>
+                        <div class="rapid-scanner-processing" id="rapid-scanner-processing">
+                            <div class="rapid-scanner-processing-spinner"></div>
+                            <span>Looking up...</span>
+                        </div>
                     </div>
                 </div>
-                <button class="rapid-scanner-flash-btn" id="rapid-scanner-flash" aria-label="Toggle flashlight">
-                    <!-- Flashlight off - outline style matching SF Symbol flashlight.off.fill -->
-                    <svg class="flash-off" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 22V18M15 22V18M9 18H15M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-                        <ellipse cx="12" cy="8" rx="2" ry="1.5" fill="currentColor" opacity="0.4"/>
-                    </svg>
-                    <!-- Flashlight on - filled style matching SF Symbol flashlight.on.fill -->
-                    <svg class="flash-on" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 22V18H15V22M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18H9Z" fill="currentColor"/>
-                        <ellipse cx="12" cy="8" rx="2.5" ry="2" fill="#fbbf24"/>
-                        <ellipse cx="12" cy="8" rx="4" ry="3" fill="#fbbf24" opacity="0.3"/>
-                    </svg>
-                </button>
+                <!-- Right side: Flash and Done buttons grouped together -->
+                <div class="rapid-scanner-header-right">
+                    <button class="rapid-scanner-flash-btn" id="rapid-scanner-flash" aria-label="Toggle flashlight">
+                        <!-- Flashlight off - outline style matching SF Symbol flashlight.off.fill -->
+                        <svg class="flash-off" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 22V18M15 22V18M9 18H15M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                            <ellipse cx="12" cy="8" rx="2" ry="1.5" fill="currentColor" opacity="0.4"/>
+                        </svg>
+                        <!-- Flashlight on - filled style matching SF Symbol flashlight.on.fill -->
+                        <svg class="flash-on" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 22V18H15V22M9 18V14.5L6.5 11V7C6.5 5.34315 7.84315 4 9.5 4H14.5C16.1569 4 17.5 5.34315 17.5 7V11L15 14.5V18H9Z" fill="currentColor"/>
+                            <ellipse cx="12" cy="8" rx="2.5" ry="2" fill="#fbbf24"/>
+                            <ellipse cx="12" cy="8" rx="4" ry="3" fill="#fbbf24" opacity="0.3"/>
+                        </svg>
+                    </button>
+                    <button class="rapid-scanner-done-btn" id="rapid-scanner-done">Done</button>
+                </div>
             </div>
 
             <!-- Scan frame overlay -->

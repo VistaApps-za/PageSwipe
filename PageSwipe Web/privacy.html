@@ -38,10 +38,12 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
 
-    <!-- Fonts -->
+    <!-- Fonts - non-render-blocking -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
     <style>
         :root {
@@ -235,6 +237,75 @@
 
         .mobile-menu-btn {
             display: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu {
+                background: #1a1a1a;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--color-text);
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .mobile-menu-link:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu-link:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu-divider {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu-cta {
+            margin-top: 0.5rem;
+            text-align: center;
         }
 
         /* Page Header */
@@ -551,19 +622,50 @@
             }
 
             .mobile-menu-btn {
-                display: block;
-                background: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                -webkit-appearance: none;
+                appearance: none;
+                background: transparent;
                 border: none;
+                outline: none;
+                box-shadow: none;
                 padding: 0.5rem;
                 cursor: pointer;
+                z-index: 1001;
+                width: 44px;
+                height: 44px;
+                position: relative;
             }
 
             .mobile-menu-btn span {
                 display: block;
-                width: 20px;
+                width: 24px;
                 height: 2px;
                 background: var(--color-text);
-                margin: 5px 0;
+                margin: 4px 0;
+                transition: all 0.3s ease;
+                transform: none;
+                transform-origin: center;
+                border-radius: 1px;
+            }
+
+            .mobile-menu-btn.active span:nth-child(1) {
+                transform: rotate(45deg);
+                margin: 0;
+                position: absolute;
+            }
+
+            .mobile-menu-btn.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .mobile-menu-btn.active span:nth-child(3) {
+                transform: rotate(-45deg);
+                margin: 0;
+                position: absolute;
             }
 
             .page-header {
@@ -626,6 +728,17 @@
             <span></span>
             <span></span>
         </button>
+
+        <!-- Mobile Menu Dropdown -->
+        <div class="mobile-menu">
+            <a href="index.html" class="mobile-menu-link">Home</a>
+            <a href="index.html#features" class="mobile-menu-link">Features</a>
+            <a href="premium.html" class="mobile-menu-link">Premium</a>
+            <a href="faq.html" class="mobile-menu-link">FAQ</a>
+            <div class="mobile-menu-divider"></div>
+            <a href="app.html" class="mobile-menu-link">Sign In</a>
+            <a href="app.html" class="btn btn-primary mobile-menu-cta">Get Started</a>
+        </div>
     </nav>
 
     <!-- Page Header -->
@@ -922,5 +1035,35 @@
             <p>2026 PageSwipe. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileMenuBtn.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking a link
+            document.querySelectorAll('.mobile-menu-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

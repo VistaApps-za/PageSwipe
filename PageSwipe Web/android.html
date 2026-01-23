@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1EVE19YXGZ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-1EVE19YXGZ');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install PageSwipe on Android | PageSwipe</title>
+    <meta name="description" content="Install PageSwipe on your Android device for a native app experience. Get quick access to book discovery, RapidScan, and all your reading features from your home screen.">
+    <meta name="keywords" content="PageSwipe Android, install PageSwipe, Android PWA, book app Android, PageSwipe home screen">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pageswipe.tech/android">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pageswipe.tech/android">
+    <meta property="og:title" content="Install PageSwipe on Android">
+    <meta property="og:description" content="Get the native app experience on Android. Install PageSwipe to your home screen for quick access to all features.">
+    <meta property="og:image" content="https://pageswipe.tech/images/og-image.png">
+    <meta property="og:site_name" content="PageSwipe">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://pageswipe.tech/android">
+    <meta name="twitter:title" content="Install PageSwipe on Android">
+    <meta name="twitter:description" content="Get the native app experience on Android. Install PageSwipe to your home screen for quick access to all features.">
+    <meta name="twitter:image" content="https://pageswipe.tech/images/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+
+    <!-- Fonts - non-render-blocking -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+
+    <!-- Schema.org Breadcrumb Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://pageswipe.tech"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Install on Android",
+          "item": "https://pageswipe.tech/android"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Schema.org HowTo Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Install PageSwipe on Android",
+      "description": "Step-by-step guide to install PageSwipe as a Progressive Web App on your Android device",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Open PageSwipe in Chrome",
+          "text": "Visit pageswipe.tech/app in Google Chrome on your Android device"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Open the menu",
+          "text": "Tap the three-dot menu icon in the top right corner"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Add to Home screen",
+          "text": "Select 'Add to Home screen' from the menu options"
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Confirm installation",
+          "text": "Tap 'Add' to confirm and the PageSwipe icon will appear on your home screen"
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        :root {
+            /* Primary Brand Colors */
+            --color-teal: #2DB3A0;
+            --color-coral: #F2786D;
+            --color-navy: #1E3A5F;
+
+            /* Extended Palette */
+            --color-teal-light: #E6F5F3;
+            --color-teal-dark: #238F80;
+            --color-coral-light: #FDEAE8;
+            --color-coral-dark: #D65A4F;
+            --color-navy-light: #E8EDF3;
+
+            --color-primary: #1E3A5F;
+            --color-primary-hover: #162d4a;
+            --color-accent: #F2786D;
+            --color-accent-hover: #D65A4F;
+            --color-teal-hover: #238F80;
+            --gradient-brand: linear-gradient(135deg, #2DB3A0 0%, #F2786D 100%);
+
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-surface-hover: #f1f5f9;
+            --color-border: rgba(30, 58, 95, 0.08);
+
+            --color-text: #1E3A5F;
+            --color-text-secondary: #64748b;
+            --color-text-tertiary: #94a3b8;
+
+            /* Typography */
+            --font-display: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-2xl: 24px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-primary: #ffffff;
+                --color-primary-hover: #f0f0f0;
+                --color-accent: #F58B82;
+                --color-accent-hover: #F2786D;
+                --color-teal: #3DBFAD;
+                --color-teal-hover: #2DB3A0;
+                --color-coral: #F58B82;
+                --gradient-brand: linear-gradient(135deg, #3DBFAD 0%, #F58B82 100%);
+                --color-bg: #0c1222;
+                --color-surface: #141e33;
+                --color-surface-hover: #1e2d4a;
+                --color-border: rgba(255, 255, 255, 0.08);
+                --color-text: #f1f5f9;
+                --color-text-secondary: #94a3b8;
+                --color-text-tertiary: #64748b;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(250, 250, 250, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .nav {
+                background: rgba(10, 10, 10, 0.8);
+            }
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--color-text);
+        }
+
+        .nav-logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .nav-logo-text {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.15s;
+        }
+
+        .nav-link:hover {
+            color: var(--color-text);
+        }
+
+        .nav-cta {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-secondary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--color-surface-hover);
+            color: var(--color-text);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 0.9375rem;
+        }
+
+        .btn-gradient {
+            background: var(--gradient-brand);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(242, 120, 109, 0.3);
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(242, 120, 109, 0.4);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu {
+                background: #1a1a1a;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--color-text);
+            text-decoration: none;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .mobile-menu-link:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu-link:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            margin: 0.5rem 0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .mobile-menu-divider {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .mobile-menu-cta {
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        /* Hero Section */
+        .android-hero {
+            padding: 8rem 2rem 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .android-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(61, 191, 173, 0.08) 0%, rgba(245, 139, 130, 0.06) 100%);
+            pointer-events: none;
+        }
+
+        .android-hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .android-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--color-teal);
+            margin-bottom: 1.5rem;
+        }
+
+        .android-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .android-hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--color-text);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .android-hero-title .highlight {
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .android-hero-description {
+            font-size: 1.125rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+
+        /* Phone mockup */
+        .phone-mockup {
+            max-width: 220px;
+            margin: 2rem auto 0;
+            position: relative;
+        }
+
+        .phone-frame {
+            background: var(--color-surface);
+            border-radius: 32px;
+            padding: 12px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--color-border);
+        }
+
+        .phone-screen {
+            background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-coral) 100%);
+            border-radius: 24px;
+            padding: 1.5rem;
+            aspect-ratio: 9/16;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .phone-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .phone-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .phone-label {
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Main Content */
+        .android-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem 6rem;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            margin-bottom: 4rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-teal);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-description {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .benefit-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.2s;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(45, 179, 160, 0.3);
+        }
+
+        .benefit-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, rgba(45, 179, 160, 0.1) 0%, rgba(242, 120, 109, 0.1) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .benefit-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--color-teal);
+        }
+
+        .benefit-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .benefit-content p {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Browser Instructions */
+        .browsers-section {
+            margin-bottom: 4rem;
+        }
+
+        .browser-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .browser-card:hover {
+            border-color: rgba(45, 179, 160, 0.3);
+        }
+
+        .browser-card.recommended {
+            border: 2px solid var(--color-teal);
+        }
+
+        .browser-header {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .browser-header:hover {
+            background: var(--color-surface-hover);
+        }
+
+        .browser-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .browser-logo.chrome { background: #E8F5E9; }
+        .browser-logo.samsung { background: #E3F2FD; }
+        .browser-logo.firefox { background: #FFF3E0; }
+        .browser-logo.edge { background: #E3F2FD; }
+        .browser-logo.brave { background: #FFF3E0; }
+
+        .browser-info {
+            flex: 1;
+        }
+
+        .browser-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recommended-badge {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: white;
+            background: var(--color-teal);
+            padding: 0.25rem 0.5rem;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .browser-preview {
+            font-size: 0.8125rem;
+            color: var(--color-text-secondary);
+        }
+
+        .browser-chevron {
+            width: 24px;
+            height: 24px;
+            color: var(--color-text-tertiary);
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .browser-card.open .browser-chevron {
+            transform: rotate(180deg);
+        }
+
+        .browser-steps {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .browser-card.open .browser-steps {
+            max-height: 500px;
+        }
+
+        .browser-steps-inner {
+            padding: 0 1.5rem 1.5rem;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .step {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .step:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: var(--gradient-brand);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            padding-top: 2px;
+        }
+
+        .step-text {
+            font-size: 0.9375rem;
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        .step-text strong {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        .step-text .menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: var(--color-surface-hover);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            vertical-align: middle;
+            margin: 0 0.25rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .step-hint {
+            font-size: 0.8125rem;
+            color: var(--color-text-tertiary);
+            margin-top: 0.375rem;
+        }
+
+        /* Unsupported browsers note */
+        .unsupported-note {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .unsupported-note-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .unsupported-note-icon svg {
+            width: 20px;
+            height: 20px;
+            color: #F59E0B;
+        }
+
+        .unsupported-note-content h4 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .unsupported-note-content p {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 3rem;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-2xl);
+        }
+
+        .cta-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-description {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            padding: 3rem 2rem 1.5rem;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .footer-brand {
+            max-width: 280px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+
+        .footer-description {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .footer-column h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        .footer-links a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover {
+            color: var(--color-text);
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 2rem auto 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8125rem;
+            color: var(--color-text-tertiary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-cta {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                -webkit-appearance: none;
+                appearance: none;
+                background: transparent;
+                border: none;
+                outline: none;
+                box-shadow: none;
+                padding: 0.5rem;
+                cursor: pointer;
+                z-index: 1001;
+                width: 44px;
+                height: 44px;
+                position: relative;
+            }
+
+            .mobile-menu-btn span {
+                display: block;
+                width: 24px;
+                height: 2px;
+                background: var(--color-text);
+                margin: 4px 0;
+                transition: all 0.3s ease;
+                transform: none;
+                transform-origin: center;
+                border-radius: 1px;
+            }
+
+            .mobile-menu-btn.active span:nth-child(1) {
+                transform: rotate(45deg);
+                margin: 0;
+                position: absolute;
+            }
+
+            .mobile-menu-btn.active span:nth-child(2) {
+                opacity: 0;
+            }
+
+            .mobile-menu-btn.active span:nth-child(3) {
+                transform: rotate(-45deg);
+                margin: 0;
+                position: absolute;
+            }
+
+            .android-hero {
+                padding: 6rem 1.5rem 3rem;
+            }
+
+            .android-content {
+                padding: 0 1.5rem 4rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .benefit-card {
+                padding: 1.25rem;
+            }
+
+            .cta-section {
+                padding: 2rem 1.5rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .cta-buttons .btn {
+                width: 100%;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                max-width: none;
+            }
+
+            .footer-logo {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .browser-card {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .browser-card:nth-child(1) { animation-delay: 0.05s; }
+        .browser-card:nth-child(2) { animation-delay: 0.1s; }
+        .browser-card:nth-child(3) { animation-delay: 0.15s; }
+        .browser-card:nth-child(4) { animation-delay: 0.2s; }
+        .browser-card:nth-child(5) { animation-delay: 0.25s; }
+
+        .benefit-card {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .benefit-card:nth-child(1) { animation-delay: 0.05s; }
+        .benefit-card:nth-child(2) { animation-delay: 0.1s; }
+        .benefit-card:nth-child(3) { animation-delay: 0.15s; }
+        .benefit-card:nth-child(4) { animation-delay: 0.2s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="/" class="nav-logo">
+            <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
+            <span class="nav-logo-text">PageSwipe</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="/#features" class="nav-link">Features</a>
+            <a href="/#how-it-works" class="nav-link">How It Works</a>
+            <a href="/faq" class="nav-link">FAQ</a>
+        </div>
+
+        <div class="nav-cta">
+            <a href="/app" class="btn btn-ghost">Sign In</a>
+            <a href="/app" class="btn btn-primary">Get Started</a>
+        </div>
+
+        <button class="mobile-menu-btn" aria-label="Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Mobile Menu Dropdown -->
+        <div class="mobile-menu">
+            <a href="/" class="mobile-menu-link">Home</a>
+            <a href="/#features" class="mobile-menu-link">Features</a>
+            <a href="/premium" class="mobile-menu-link">Premium</a>
+            <a href="/faq" class="mobile-menu-link">FAQ</a>
+            <div class="mobile-menu-divider"></div>
+            <a href="/app" class="mobile-menu-link">Sign In</a>
+            <a href="/app" class="btn btn-primary mobile-menu-cta">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="android-hero">
+        <div class="android-hero-content">
+            <div class="android-badge">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+                </svg>
+                Android Users
+            </div>
+
+            <h1 class="android-hero-title">
+                Get PageSwipe on <span class="highlight">Android</span>
+            </h1>
+
+            <p class="android-hero-description">
+                While we're working on a native Android app, you can install PageSwipe to your home screen right now for a native-like experience. It only takes a few seconds.
+            </p>
+
+            <div class="phone-mockup">
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="phone-icon">
+                            <img src="images/WraptIcon.png" alt="PageSwipe App Icon">
+                        </div>
+                        <span class="phone-label">PageSwipe</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="android-content">
+        <!-- Benefits Section -->
+        <section class="benefits-section">
+            <div class="section-header">
+                <span class="section-label">What You Get</span>
+                <h2 class="section-title">Full App Experience</h2>
+                <p class="section-description">Installing PageSwipe gives you all the benefits of a native app.</p>
+            </div>
+
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h3>App Icon on Home Screen</h3>
+                        <p>Launch PageSwipe instantly, just like any other app</p>
+                    </div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h3>Fullscreen Experience</h3>
+                        <p>No browser bars or distractions - pure PageSwipe</p>
+                    </div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                            <rect x="9" y="9" width="6" height="6"></rect>
+                            <line x1="9" y1="1" x2="9" y2="4"></line>
+                            <line x1="15" y1="1" x2="15" y2="4"></line>
+                            <line x1="9" y1="20" x2="9" y2="23"></line>
+                            <line x1="15" y1="20" x2="15" y2="23"></line>
+                            <line x1="20" y1="9" x2="23" y2="9"></line>
+                            <line x1="20" y1="14" x2="23" y2="14"></line>
+                            <line x1="1" y1="9" x2="4" y2="9"></line>
+                            <line x1="1" y1="14" x2="4" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h3>Shows in App Switcher</h3>
+                        <p>Appears alongside your other apps when multitasking</p>
+                    </div>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h3>All Features Included</h3>
+                        <p>RapidScan, discovery, book clubs - everything works</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Browser Instructions -->
+        <section class="browsers-section">
+            <div class="section-header">
+                <span class="section-label">Step-by-Step</span>
+                <h2 class="section-title">Install Instructions</h2>
+                <p class="section-description">Choose your browser below for specific instructions.</p>
+            </div>
+
+            <!-- Chrome (Recommended) -->
+            <div class="browser-card recommended open">
+                <div class="browser-header">
+                    <div class="browser-logo chrome">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#4285F4"/>
+                            <circle cx="12" cy="12" r="4" fill="white"/>
+                            <path d="M12 8L20 8C18.5 5 15.5 3 12 3C8.5 3 5.5 5 4 8L8 14L12 8Z" fill="#EA4335"/>
+                            <path d="M8 14L4 8C2.5 10 2 12.5 2.5 15C3 17.5 4.5 19.5 6.5 21L10.5 15L8 14Z" fill="#FBBC05"/>
+                            <path d="M10.5 15L6.5 21C8.5 22.5 11 23 13.5 22.5C16 22 18 20.5 19.5 18L15.5 12L10.5 15Z" fill="#34A853"/>
+                        </svg>
+                    </div>
+                    <div class="browser-info">
+                        <div class="browser-name">
+                            Google Chrome
+                            <span class="recommended-badge">Recommended</span>
+                        </div>
+                        <div class="browser-preview">Most Android users - best experience</div>
+                    </div>
+                    <svg class="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="browser-steps">
+                    <div class="browser-steps-inner">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-text">Open <strong>pageswipe.tech/app</strong> in Chrome</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap the menu icon <span class="menu-icon">&#8942;</span> in the top right</div>
+                                <div class="step-hint">It looks like three vertical dots</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-text">Select <strong>"Add to Home screen"</strong></div>
+                                <div class="step-hint">You may need to scroll down in the menu</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap <strong>"Add"</strong> to confirm</div>
+                                <div class="step-hint">PageSwipe will appear on your home screen</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Samsung Internet -->
+            <div class="browser-card">
+                <div class="browser-header">
+                    <div class="browser-logo samsung">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#1428A0"/>
+                            <path d="M7 12C7 9.5 9.5 7 12 7C14.5 7 17 9.5 17 12C17 14.5 14.5 17 12 17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="browser-info">
+                        <div class="browser-name">Samsung Internet</div>
+                        <div class="browser-preview">Default browser on Samsung devices</div>
+                    </div>
+                    <svg class="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="browser-steps">
+                    <div class="browser-steps-inner">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-text">Open <strong>pageswipe.tech/app</strong> in Samsung Internet</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap the menu icon (three lines) at the bottom</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-text">Select <strong>"Add page to"</strong></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-text">Choose <strong>"Home screen"</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Firefox -->
+            <div class="browser-card">
+                <div class="browser-header">
+                    <div class="browser-logo firefox">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#FF7139"/>
+                            <path d="M12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4Z" fill="#FF7139"/>
+                            <circle cx="12" cy="12" r="6" fill="#FFE5D0"/>
+                            <path d="M15 9C14 7 12 6 10 6C8 6 6.5 7.5 6.5 9.5C6.5 11.5 8 13 10 13L18 9L15 9Z" fill="#FF7139"/>
+                        </svg>
+                    </div>
+                    <div class="browser-info">
+                        <div class="browser-name">Firefox</div>
+                        <div class="browser-preview">Privacy-focused browser</div>
+                    </div>
+                    <svg class="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="browser-steps">
+                    <div class="browser-steps-inner">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-text">Open <strong>pageswipe.tech/app</strong> in Firefox</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap the menu icon <span class="menu-icon">&#8942;</span> in the top or bottom right</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-text">Select <strong>"Install"</strong></div>
+                                <div class="step-hint">Firefox calls it "Install" instead of "Add to Home screen"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edge -->
+            <div class="browser-card">
+                <div class="browser-header">
+                    <div class="browser-logo edge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" fill="#0078D4"/>
+                            <path d="M6 14C6 10 9 7 13 7C17 7 19 10 19 13C19 16 17 18 14 18C11 18 9 16 9 13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="14" cy="16" r="2" fill="#50E6FF"/>
+                        </svg>
+                    </div>
+                    <div class="browser-info">
+                        <div class="browser-name">Microsoft Edge</div>
+                        <div class="browser-preview">Microsoft's Chromium-based browser</div>
+                    </div>
+                    <svg class="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="browser-steps">
+                    <div class="browser-steps-inner">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-text">Open <strong>pageswipe.tech/app</strong> in Edge</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap the menu icon <span class="menu-icon">&#8943;</span> at the bottom center</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-text">Select <strong>"Add to phone"</strong></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-text">Choose <strong>"Add to Home screen"</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brave -->
+            <div class="browser-card">
+                <div class="browser-header">
+                    <div class="browser-logo brave">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L3 7V12C3 17.5 7 21.5 12 23C17 21.5 21 17.5 21 12V7L12 2Z" fill="#FB542B"/>
+                            <path d="M12 5L7 8V12C7 15.5 9 18 12 19C15 18 17 15.5 17 12V8L12 5Z" fill="white"/>
+                        </svg>
+                    </div>
+                    <div class="browser-info">
+                        <div class="browser-name">Brave</div>
+                        <div class="browser-preview">Privacy browser with ad blocking</div>
+                    </div>
+                    <svg class="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div class="browser-steps">
+                    <div class="browser-steps-inner">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <div class="step-text">Open <strong>pageswipe.tech/app</strong> in Brave</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap the menu icon <span class="menu-icon">&#8942;</span> in the bottom right</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <div class="step-text">Select <strong>"Add to Home screen"</strong></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <div class="step-text">Tap <strong>"Add"</strong> to confirm</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unsupported Browsers Note -->
+            <div class="unsupported-note">
+                <div class="unsupported-note-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="unsupported-note-content">
+                    <h4>Opera and DuckDuckGo Browser</h4>
+                    <p>These browsers don't currently support installing web apps to your home screen. We recommend using Chrome or one of the other browsers listed above for the best experience.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2 class="cta-title">Ready to Install?</h2>
+            <p class="cta-description">Open the PageSwipe app in your browser and follow the steps above.</p>
+            <div class="cta-buttons">
+                <a href="/app" class="btn btn-gradient btn-lg">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    Open PageSwipe App
+                </a>
+                <a href="/faq" class="btn btn-ghost btn-lg">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    View FAQ
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <img src="images/WraptIcon.png" alt="PageSwipe" class="nav-logo-img">
+                    <span class="nav-logo-text">PageSwipe</span>
+                </div>
+                <p class="footer-description">Create book clubs with friends and family. Discover your next great read with a simple swipe.</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/#how-it-works">How It Works</a></li>
+                    <li><a href="/premium">Pricing</a></li>
+                    <li><a href="https://apps.apple.com/us/app/pageswipe/id6758046049" target="_blank" rel="noopener">iOS App</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Support</h4>
+                <ul class="footer-links">
+                    <li><a href="/faq">FAQ</a></li>
+                    <li><a href="/android">Android Install</a></li>
+                    <li><a href="mailto:support@pageswipe.app">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/terms">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>2026 PageSwipe. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileMenuBtn.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking a link
+            document.querySelectorAll('.mobile-menu-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Browser accordion functionality
+        document.querySelectorAll('.browser-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const card = header.parentElement;
+                const isOpen = card.classList.contains('open');
+
+                // Close all other cards
+                document.querySelectorAll('.browser-card').forEach(otherCard => {
+                    if (otherCard !== card) {
+                        otherCard.classList.remove('open');
+                    }
+                });
+
+                // Toggle current card
+                card.classList.toggle('open', !isOpen);
+            });
+        });
+
+        // Auto-detect browser and expand relevant section
+        function detectBrowser() {
+            const userAgent = navigator.userAgent.toLowerCase();
+
+            if (userAgent.includes('samsungbrowser')) {
+                return 'samsung';
+            } else if (userAgent.includes('firefox') || userAgent.includes('fxios')) {
+                return 'firefox';
+            } else if (userAgent.includes('edg')) {
+                return 'edge';
+            } else if (userAgent.includes('brave')) {
+                return 'brave';
+            } else if (userAgent.includes('chrome') || userAgent.includes('crios')) {
+                return 'chrome';
+            }
+            return 'chrome'; // Default to Chrome
+        }
+
+        // On Android, auto-expand the detected browser's instructions
+        if (/android/i.test(navigator.userAgent)) {
+            const detectedBrowser = detectBrowser();
+            const browserCards = document.querySelectorAll('.browser-card');
+
+            browserCards.forEach(card => {
+                card.classList.remove('open');
+            });
+
+            // Map browser names to card indices
+            const browserMap = {
+                'chrome': 0,
+                'samsung': 1,
+                'firefox': 2,
+                'edge': 3,
+                'brave': 4
+            };
+
+            const cardIndex = browserMap[detectedBrowser];
+            if (cardIndex !== undefined && browserCards[cardIndex]) {
+                browserCards[cardIndex].classList.add('open');
+            }
+        }
+    </script>
+</body>
+</html>

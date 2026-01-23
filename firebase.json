@@ -81,6 +81,10 @@
         "destination": "/terms.html"
       },
       {
+        "source": "/android",
+        "destination": "/android.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

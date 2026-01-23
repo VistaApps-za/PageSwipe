@@ -12,7 +12,8 @@ import {
     GoogleAuthProvider,
     OAuthProvider,
     signInWithPopup,
-    updateProfile
+    updateProfile,
+    sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
 import {
     doc,
@@ -135,6 +136,20 @@ export async function signOutUser() {
     } catch (error) {
         console.error('Sign out error:', error);
         return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Send password reset email
+ * @param {string} email - User email address
+ */
+export async function resetPassword(email) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        return { success: true };
+    } catch (error) {
+        console.error('Password reset error:', error);
+        return { success: false, error: getErrorMessage(error.code) };
     }
 }
 

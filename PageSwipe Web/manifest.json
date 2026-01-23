@@ -1,0 +1,27 @@
+{
+  "name": "PageSwipe",
+  "short_name": "PageSwipe",
+  "description": "Organize, track, and share your books effortlessly",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF6B6B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/WraptIcon.png",
+      "sizes": "160x160",
+      "type": "image/png"
+    },
+    {
+      "src": "images/WraptIcon@2x.png",
+      "sizes": "320x320",
+      "type": "image/png"
+    },
+    {
+      "src": "images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

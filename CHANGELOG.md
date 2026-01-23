@@ -8,6 +8,71 @@ Format: Each entry includes the change description and affected files.
 
 ---
 
+## [2026-01-23] - v1.0 MVP Release
+
+### Added
+
+- **Android Install Page** - Help page for Android users to install PageSwipe as a PWA
+  - Step-by-step instructions for Chrome, Samsung Internet, Firefox, Edge, Brave
+  - Auto-detects user's browser and expands relevant instructions
+  - Benefits section explaining app-like experience
+  - Notes unsupported browsers (Opera, DuckDuckGo)
+  - Schema.org HowTo markup for rich search results
+  - (files: `PageSwipe Web/android.html`, `firebase.json`)
+
+- **PWA Manifest** - Progressive Web App support for home screen installation
+  - Standalone display mode (no browser UI when launched from home screen)
+  - App icons for various sizes
+  - Theme color and background color defined
+  - (files: `PageSwipe Web/manifest.json`, `PageSwipe Web/app.html`)
+
+- **Forgot Password** - Password reset functionality matching iOS
+  - "Forgot password?" link on sign-in form
+  - Email input form for reset link
+  - Success/error messaging
+  - (files: `PageSwipe Web/js/auth-service.js`, `PageSwipe Web/app.html`, `PageSwipe Web/js/app.js`, `PageSwipe Web/css/app.css`)
+
+- **Git Workflow Documentation** - Branch strategy and versioning documented
+  - main/develop/feature branch structure
+  - Firebase preview channels for testing
+  - Version tagging convention
+  - (files: `ECOSYSTEM.md`)
+
+### Changed
+
+- **Performance Optimizations** - Lighthouse score improvements
+  - Logo image optimized: 2MB → 35KB (with 2x retina version)
+  - Google Fonts now load asynchronously (non-render-blocking)
+  - Added explicit image dimensions to prevent layout shift
+  - Applied to all pages: index, premium, faq, privacy, terms, 404, app
+  - (files: `PageSwipe Web/images/WraptIcon.png`, `PageSwipe Web/images/WraptIcon@2x.png`, all HTML files)
+
+- **RapidScan Done Button** - Moved to right side of header for better reliability
+  - Now positioned next to flash button
+  - Styled as matching pill button
+  - Scanner exit modal z-index fixed to appear above scanner
+  - (files: `PageSwipe Web/app.html`, `PageSwipe Web/css/app.css`)
+
+- **Mobile Header Simplified** - Removed redundant hamburger menu
+  - Bottom navigation provides same functionality
+  - Header now shows centered logo only
+  - (files: `PageSwipe Web/app.html`, `PageSwipe Web/css/app.css`)
+
+- **Clean URLs** - All internal links updated to use clean URLs
+  - `/app` instead of `/app.html`
+  - `/premium` instead of `/premium.html`
+  - etc.
+  - (files: `PageSwipe Web/android.html`)
+
+### Fixed
+
+- **Scanner Exit Modal** - Modal now appears above scanner overlay
+  - z-index increased to 10002 (scanner is 10000)
+  - Done button now properly shows confirmation when books scanned
+  - (files: `PageSwipe Web/css/app.css`)
+
+---
+
 ## [2026-01-22]
 
 ### Added

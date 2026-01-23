@@ -11,7 +11,8 @@ import {
     signInWithGoogle,
     signInWithApple,
     signOutUser,
-    getUserProfile
+    getUserProfile,
+    resetPassword
 } from './auth-service.js';
 
 import {
@@ -139,9 +140,12 @@ const elements = {
     // Auth forms
     signinForm: document.getElementById('signin-form'),
     signupForm: document.getElementById('signup-form'),
+    forgotPasswordForm: document.getElementById('forgot-password-form'),
     signinEmailForm: document.getElementById('signin-email-form'),
     signupEmailForm: document.getElementById('signup-email-form'),
+    forgotPasswordEmailForm: document.getElementById('forgot-password-email-form'),
     authError: document.getElementById('auth-error'),
+    resetSuccess: document.getElementById('reset-success'),
 
     // Views
     homeView: document.getElementById('home-view'),
@@ -280,19 +284,46 @@ function initEventListeners() {
         e.preventDefault();
         elements.signinForm.style.display = 'none';
         elements.signupForm.style.display = 'block';
+        elements.forgotPasswordForm.style.display = 'none';
         hideAuthError();
+        hideResetSuccess();
     });
 
     document.getElementById('show-signin').addEventListener('click', (e) => {
         e.preventDefault();
         elements.signupForm.style.display = 'none';
         elements.signinForm.style.display = 'block';
+        elements.forgotPasswordForm.style.display = 'none';
         hideAuthError();
+        hideResetSuccess();
+    });
+
+    document.getElementById('show-forgot-password').addEventListener('click', (e) => {
+        e.preventDefault();
+        elements.signinForm.style.display = 'none';
+        elements.signupForm.style.display = 'none';
+        elements.forgotPasswordForm.style.display = 'block';
+        hideAuthError();
+        hideResetSuccess();
+        // Pre-fill email if user already entered one
+        const signinEmail = document.getElementById('signin-email').value;
+        if (signinEmail) {
+            document.getElementById('forgot-email').value = signinEmail;
+        }
+    });
+
+    document.getElementById('back-to-signin').addEventListener('click', (e) => {
+        e.preventDefault();
+        elements.forgotPasswordForm.style.display = 'none';
+        elements.signinForm.style.display = 'block';
+        hideAuthError();
+        hideResetSuccess();
     });
 
     // Auth form submissions
     elements.signinEmailForm.addEventListener('submit', handleSignIn);
     elements.signupEmailForm.addEventListener('submit', handleSignUp);
+    elements.forgotPasswordEmailForm.addEventListener('submit', handleForgotPassword);
 
     // Social auth
     document.getElementById('google-signin').addEventListener('click', handleGoogleAuth);
@@ -784,6 +815,64 @@ async function handleSignOut() {
         console.error('Sign out error:', error);
         showToast('Failed to sign out. Please try again.', 'error');
         hideLoading();
+    }
+}
+
+async function handleForgotPassword(e) {
+    e.preventDefault();
+    hideAuthError();
+    hideResetSuccess();
+    clearFieldErrors();
+
+    const emailInput = document.getElementById('forgot-email');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const email = emailInput.value.trim();
+
+    // Client-side validation
+    if (!email) {
+        showFieldError(emailInput, 'Please enter your email address');
+        showAuthError('Please enter your email address');
+        return;
+    }
+
+    if (!isValidEmail(email)) {
+        showFieldError(emailInput, 'Please enter a valid email address');
+        showAuthError('Please enter a valid email address');
+        return;
+    }
+
+    // Show loading state
+    setButtonLoading(submitBtn, true);
+
+    try {
+        const result = await resetPassword(email);
+
+        if (result.success) {
+            // Show success message
+            showResetSuccess();
+            // Clear the form
+            emailInput.value = '';
+        } else {
+            showAuthError(result.error);
+            emailInput.classList.add('error');
+        }
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showAuthError('An unexpected error occurred. Please try again.');
+    } finally {
+        setButtonLoading(submitBtn, false);
+    }
+}
+
+function showResetSuccess() {
+    if (elements.resetSuccess) {
+        elements.resetSuccess.classList.add('show');
+    }
+}
+
+function hideResetSuccess() {
+    if (elements.resetSuccess) {
+        elements.resetSuccess.classList.remove('show');
     }
 }
 
@@ -3340,6 +3429,10 @@ async function openBarcodeScanner() {
     // Open scanner
     scanner.classList.add('open');
 
+    // Request fullscreen on mobile to hide browser chrome (URL bar, nav bar)
+    // This must be called from a user gesture, which we have since this is triggered by button click
+    requestScannerFullscreen();
+
     // Small delay to ensure scanner is rendered
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -3384,6 +3477,10 @@ async function openBarcodeScanner() {
         if (!videoEl) {
             console.warn('RapidScan: Video element not found after camera start');
         }
+
+        // CRITICAL: Disable pointer events on ALL elements created by Html5Qrcode
+        // This ensures the Done button remains clickable
+        disableScannerPreviewPointerEvents();
     } catch (err) {
         isScanning = false;
         console.error('RapidScan camera error:', err);
@@ -3728,6 +3825,9 @@ async function closeRapidScanner() {
     // Stop the scanner
     await stopBarcodeScanner();
 
+    // Exit fullscreen if active
+    exitScannerFullscreen();
+
     // Close scanner view
     const scanner = document.getElementById('rapid-scanner');
     scanner.classList.remove('open');
@@ -3779,6 +3879,109 @@ function closeBarcodeScanner() {
 }
 
 /**
+ * Request fullscreen mode for the scanner on mobile devices
+ * This hides the browser chrome (URL bar, navigation bar) for a more immersive experience
+ */
+function requestScannerFullscreen() {
+    // Only request fullscreen on mobile devices (check for touch capability and small screen)
+    const isMobile = window.matchMedia('(max-width: 768px)').matches &&
+                     ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    if (!isMobile) return;
+
+    const scanner = document.getElementById('rapid-scanner');
+    if (!scanner) return;
+
+    // Try different fullscreen APIs for cross-browser support
+    const requestFullscreen = scanner.requestFullscreen ||
+                              scanner.webkitRequestFullscreen ||
+                              scanner.mozRequestFullScreen ||
+                              scanner.msRequestFullscreen;
+
+    if (requestFullscreen) {
+        try {
+            // Use promise-based API if available, otherwise just call the function
+            const fullscreenPromise = requestFullscreen.call(scanner, { navigationUI: 'hide' });
+            if (fullscreenPromise && fullscreenPromise.catch) {
+                fullscreenPromise.catch(err => {
+                    // Fullscreen request failed (may require user gesture or be blocked)
+                    console.log('Fullscreen not available:', err.message);
+                });
+            }
+        } catch (err) {
+            console.log('Fullscreen request failed:', err.message);
+        }
+    }
+}
+
+/**
+ * Exit fullscreen mode when closing the scanner
+ */
+function exitScannerFullscreen() {
+    // Check if we're in fullscreen mode
+    const fullscreenElement = document.fullscreenElement ||
+                              document.webkitFullscreenElement ||
+                              document.mozFullScreenElement ||
+                              document.msFullscreenElement;
+
+    if (!fullscreenElement) return;
+
+    // Try different exit fullscreen APIs for cross-browser support
+    const exitFullscreen = document.exitFullscreen ||
+                           document.webkitExitFullscreen ||
+                           document.mozCancelFullScreen ||
+                           document.msExitFullscreen;
+
+    if (exitFullscreen) {
+        try {
+            exitFullscreen.call(document);
+        } catch (err) {
+            console.log('Exit fullscreen failed:', err.message);
+        }
+    }
+}
+
+/**
+ * Disable pointer events on all elements inside the scanner preview
+ * This is critical to ensure header buttons remain clickable when Html5Qrcode creates canvas/video elements
+ */
+function disableScannerPreviewPointerEvents() {
+    const preview = document.getElementById('rapid-scanner-preview');
+    if (!preview) return;
+
+    // Disable pointer events on all existing children
+    const children = preview.querySelectorAll('*');
+    children.forEach(el => {
+        el.style.pointerEvents = 'none';
+    });
+
+    // Set up MutationObserver to catch any dynamically added elements
+    if (window.scannerPreviewObserver) {
+        window.scannerPreviewObserver.disconnect();
+    }
+
+    window.scannerPreviewObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    node.style.pointerEvents = 'none';
+                    // Also disable on all descendants
+                    const descendants = node.querySelectorAll('*');
+                    descendants.forEach(el => {
+                        el.style.pointerEvents = 'none';
+                    });
+                }
+            });
+        });
+    });
+
+    window.scannerPreviewObserver.observe(preview, {
+        childList: true,
+        subtree: true
+    });
+}
+
+/**
  * Retry scanner after error
  */
 async function retryRapidScanner() {
@@ -3797,20 +4000,112 @@ function handleRapidScannerError(errorMessage) {
     scannerErrorText.textContent = errorMessage;
 }
 
+// Debounce tracking for scanner buttons to prevent double-triggers
+let lastDoneTrigger = 0;
+let lastFlashTrigger = 0;
+const BUTTON_DEBOUNCE_MS = 300;
+
+/**
+ * Debounced Done button handler
+ */
+function triggerDone(e) {
+    const now = Date.now();
+    if (now - lastDoneTrigger < BUTTON_DEBOUNCE_MS) return;
+    lastDoneTrigger = now;
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+    handleRapidScannerDone();
+}
+
+/**
+ * Debounced Flash button handler
+ */
+function triggerFlash(e) {
+    const now = Date.now();
+    if (now - lastFlashTrigger < BUTTON_DEBOUNCE_MS) return;
+    lastFlashTrigger = now;
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+    toggleRapidScannerFlash();
+}
+
 /**
  * Initialize rapid scanner event listeners
+ * Uses multiple strategies to ensure buttons work even when Html5Qrcode library adds blocking elements
  */
 function initRapidScannerListeners() {
-    // Use event delegation on the scanner container to catch ALL clicks
-    // This bypasses z-index/pointer-events issues that block direct button listeners
-    const scanner = document.getElementById('rapid-scanner');
-    if (scanner) {
-        // Single delegated click handler for all scanner buttons
-        scanner.addEventListener('click', handleScannerClick, true); // Use capture phase
+    const doneBtn = document.getElementById('rapid-scanner-done');
+    const flashBtn = document.getElementById('rapid-scanner-flash');
 
-        // Also handle touch events for mobile - use touchstart for reliability
-        scanner.addEventListener('touchstart', handleScannerTouch, { passive: false, capture: true });
+    // STRATEGY 1: Direct button listeners with capture phase (highest priority)
+    // These fire before any other handlers can intercept
+    if (doneBtn) {
+        // Use both click and touch events for maximum reliability
+        doneBtn.addEventListener('click', triggerDone, { capture: true });
+        doneBtn.addEventListener('touchend', triggerDone, { capture: true, passive: false });
+        doneBtn.addEventListener('pointerup', (e) => {
+            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+                triggerDone(e);
+            }
+        }, { capture: true });
     }
+
+    if (flashBtn) {
+        flashBtn.addEventListener('click', triggerFlash, { capture: true });
+        flashBtn.addEventListener('touchend', triggerFlash, { capture: true, passive: false });
+        flashBtn.addEventListener('pointerup', (e) => {
+            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+                triggerFlash(e);
+            }
+        }, { capture: true });
+    }
+
+    // STRATEGY 2: Document-level listener that checks coordinates
+    // Catches clicks that somehow bypass the button listeners
+    document.addEventListener('click', (e) => {
+        const scanner = document.getElementById('rapid-scanner');
+        if (!scanner || !scanner.classList.contains('open')) return;
+
+        const doneBtn = document.getElementById('rapid-scanner-done');
+        const flashBtn = document.getElementById('rapid-scanner-flash');
+
+        if (doneBtn && isClickWithinElement(e.clientX, e.clientY, doneBtn)) {
+            triggerDone(e);
+            return;
+        }
+
+        if (flashBtn && isClickWithinElement(e.clientX, e.clientY, flashBtn)) {
+            triggerFlash(e);
+            return;
+        }
+    }, { capture: true });
+
+    // STRATEGY 3: Touch coordinate handler at document level
+    document.addEventListener('touchend', (e) => {
+        const scanner = document.getElementById('rapid-scanner');
+        if (!scanner || !scanner.classList.contains('open')) return;
+        if (e.changedTouches.length === 0) return;
+
+        const touch = e.changedTouches[0];
+        const doneBtn = document.getElementById('rapid-scanner-done');
+        const flashBtn = document.getElementById('rapid-scanner-flash');
+
+        if (doneBtn && isClickWithinElement(touch.clientX, touch.clientY, doneBtn)) {
+            triggerDone(e);
+            return;
+        }
+
+        if (flashBtn && isClickWithinElement(touch.clientX, touch.clientY, flashBtn)) {
+            triggerFlash(e);
+            return;
+        }
+    }, { capture: true, passive: false });
 
     // Retry button (separate because it may be in error state)
     const retryBtn = document.getElementById('rapid-scanner-retry-btn');
@@ -3858,57 +4153,6 @@ function initRapidScannerListeners() {
 }
 
 /**
- * Delegated click handler for scanner - checks click position against button bounds
- */
-function handleScannerClick(e) {
-    const doneBtn = document.getElementById('rapid-scanner-done');
-    const flashBtn = document.getElementById('rapid-scanner-flash');
-
-    // Check if click is within Done button bounds (even if something is "in front")
-    if (doneBtn && isClickWithinElement(e.clientX, e.clientY, doneBtn)) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleRapidScannerDone();
-        return;
-    }
-
-    // Check if click is within Flash button bounds
-    if (flashBtn && isClickWithinElement(e.clientX, e.clientY, flashBtn)) {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleRapidScannerFlash();
-        return;
-    }
-}
-
-/**
- * Delegated touch handler for scanner
- */
-function handleScannerTouch(e) {
-    if (e.touches.length === 0) return;
-
-    const touch = e.touches[0];
-    const doneBtn = document.getElementById('rapid-scanner-done');
-    const flashBtn = document.getElementById('rapid-scanner-flash');
-
-    // Check if touch is within Done button bounds
-    if (doneBtn && isClickWithinElement(touch.clientX, touch.clientY, doneBtn)) {
-        e.preventDefault();
-        e.stopPropagation();
-        handleRapidScannerDone();
-        return;
-    }
-
-    // Check if touch is within Flash button bounds
-    if (flashBtn && isClickWithinElement(touch.clientX, touch.clientY, flashBtn)) {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleRapidScannerFlash();
-        return;
-    }
-}
-
-/**
  * Check if a point (x, y) is within an element's bounding box
  */
 function isClickWithinElement(x, y, element) {
@@ -3951,6 +4195,9 @@ async function openSingleScanScanner() {
     // Open scanner
     scanner.classList.add('open');
 
+    // Request fullscreen on mobile to hide browser chrome
+    requestScannerFullscreen();
+
     // Small delay to ensure scanner is rendered
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -3989,6 +4236,10 @@ async function openSingleScanScanner() {
             handleSingleScan,
             () => {} // Ignore continuous scan errors
         );
+
+        // CRITICAL: Disable pointer events on ALL elements created by Html5Qrcode
+        // This ensures the Done button remains clickable
+        disableScannerPreviewPointerEvents();
     } catch (err) {
         isScanning = false;
         console.error('Single scan camera error:', err);
@@ -4016,6 +4267,9 @@ async function handleSingleScan(decodedText) {
 
     // Stop scanning immediately - we only want one scan
     await stopBarcodeScanner();
+
+    // Exit fullscreen if active
+    exitScannerFullscreen();
 
     // Close the scanner UI
     const scanner = document.getElementById('rapid-scanner');
