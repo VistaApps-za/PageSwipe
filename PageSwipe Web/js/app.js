@@ -3801,19 +3801,18 @@ function handleRapidScannerError(errorMessage) {
  * Initialize rapid scanner event listeners
  */
 function initRapidScannerListeners() {
-    // Done button
-    const doneBtn = document.getElementById('rapid-scanner-done');
-    if (doneBtn) {
-        doneBtn.addEventListener('click', handleRapidScannerDone);
+    // Use event delegation on the scanner container to catch ALL clicks
+    // This bypasses z-index/pointer-events issues that block direct button listeners
+    const scanner = document.getElementById('rapid-scanner');
+    if (scanner) {
+        // Single delegated click handler for all scanner buttons
+        scanner.addEventListener('click', handleScannerClick, true); // Use capture phase
+
+        // Also handle touch events for mobile - use touchstart for reliability
+        scanner.addEventListener('touchstart', handleScannerTouch, { passive: false, capture: true });
     }
 
-    // Flash toggle
-    const flashBtn = document.getElementById('rapid-scanner-flash');
-    if (flashBtn) {
-        flashBtn.addEventListener('click', toggleRapidScannerFlash);
-    }
-
-    // Retry button
+    // Retry button (separate because it may be in error state)
     const retryBtn = document.getElementById('rapid-scanner-retry-btn');
     if (retryBtn) {
         retryBtn.addEventListener('click', retryRapidScanner);
@@ -3856,6 +3855,65 @@ function initRapidScannerListeners() {
     if (exitModalBackdrop) {
         exitModalBackdrop.addEventListener('click', closeAllModals);
     }
+}
+
+/**
+ * Delegated click handler for scanner - checks click position against button bounds
+ */
+function handleScannerClick(e) {
+    const doneBtn = document.getElementById('rapid-scanner-done');
+    const flashBtn = document.getElementById('rapid-scanner-flash');
+
+    // Check if click is within Done button bounds (even if something is "in front")
+    if (doneBtn && isClickWithinElement(e.clientX, e.clientY, doneBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleRapidScannerDone();
+        return;
+    }
+
+    // Check if click is within Flash button bounds
+    if (flashBtn && isClickWithinElement(e.clientX, e.clientY, flashBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleRapidScannerFlash();
+        return;
+    }
+}
+
+/**
+ * Delegated touch handler for scanner
+ */
+function handleScannerTouch(e) {
+    if (e.touches.length === 0) return;
+
+    const touch = e.touches[0];
+    const doneBtn = document.getElementById('rapid-scanner-done');
+    const flashBtn = document.getElementById('rapid-scanner-flash');
+
+    // Check if touch is within Done button bounds
+    if (doneBtn && isClickWithinElement(touch.clientX, touch.clientY, doneBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleRapidScannerDone();
+        return;
+    }
+
+    // Check if touch is within Flash button bounds
+    if (flashBtn && isClickWithinElement(touch.clientX, touch.clientY, flashBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleRapidScannerFlash();
+        return;
+    }
+}
+
+/**
+ * Check if a point (x, y) is within an element's bounding box
+ */
+function isClickWithinElement(x, y, element) {
+    const rect = element.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
 }
 
 // ============================================

@@ -104,13 +104,17 @@ export async function lookupByISBN(isbn) {
 
         // Use Cloud Function (handles enhancement automatically)
         try {
+            console.log('Calling Cloud Function for ISBN:', isbn);
             const result = await lookupBookFunction({ isbn });
+            console.log('Cloud Function result:', result.data);
             if (result.data?.success && result.data?.book) {
                 const book = result.data.book;
+                // Cache the good Cloud Function result
+                await cacheBook(book);
                 return { success: true, data: [book] };
             }
         } catch (cloudError) {
-            console.warn('Cloud Function lookup failed, using fallback:', cloudError);
+            console.error('Cloud Function lookup failed:', cloudError);
         }
 
         // Fallback to direct Google Books API with client-side enhancement

@@ -6734,11 +6734,18 @@ h4 { font-size: 0.9375rem; }
     display: flex;
 }
 
-/* Disable pointer events on everything by default, re-enable on interactive elements */
-.rapid-scanner * {
-    pointer-events: none;
+/* Disable pointer events on scanner overlays, enable on interactive containers */
+.rapid-scanner-preview,
+.rapid-scanner-preview *,
+.rapid-scanner-overlay,
+.rapid-scanner-gradient-top,
+.rapid-scanner-toast,
+.rapid-scanner-title {
+    pointer-events: none !important;
 }
 
+.rapid-scanner-header,
+.rapid-scanner-bottom,
 .rapid-scanner-done-btn,
 .rapid-scanner-flash-btn,
 .rapid-scanner-recent-list,

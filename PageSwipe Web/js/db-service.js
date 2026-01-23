@@ -1030,10 +1030,23 @@ export async function cacheBook(bookData) {
  */
 export async function getCachedBook(bookId) {
     try {
+        // First try direct document lookup (web client caches with ISBN as doc ID)
         const bookDoc = await getDoc(doc(db, 'books', bookId));
         if (bookDoc.exists()) {
             return { success: true, data: bookDoc.data() };
         }
+
+        // Also try query by isbn field (Cloud Function caches with random doc IDs)
+        const q = query(
+            collection(db, 'books'),
+            where('isbn', '==', bookId),
+            limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            return { success: true, data: snapshot.docs[0].data() };
+        }
+
         return { success: false, error: 'Book not found' };
     } catch (error) {
         console.error('Get cached book error:', error);
