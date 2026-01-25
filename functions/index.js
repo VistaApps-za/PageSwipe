@@ -135,7 +135,13 @@ const DISCOVERY_CONFIG = {
       queries: [
         "Atomic Habits James Clear", "Brene Brown book", "The Subtle Art of Not Giving",
         "self improvement bestseller", "You Are a Badass", "The Power of Now",
-        "Mark Manson book", "personal development bestseller"
+        "Mark Manson book", "personal development bestseller",
+        "The 7 Habits Stephen Covey", "Think and Grow Rich Napoleon Hill",
+        "The Four Agreements Don Miguel Ruiz", "Mindset Carol Dweck",
+        "Grit Angela Duckworth", "The Alchemist Paulo Coelho",
+        "How to Win Friends Dale Carnegie", "Can't Hurt Me David Goggins",
+        "12 Rules for Life Jordan Peterson", "Rich Dad Poor Dad Robert Kiyosaki",
+        "Deep Work Cal Newport", "The Compound Effect Darren Hardy"
       ],
       isFiction: false
     },
@@ -303,12 +309,12 @@ exports.discoverBooks = onCall(async (request) => {
     if (genre === "random") {
       // For random, use a diverse mix of popular queries
       const shuffled = [...DISCOVERY_CONFIG.popularNovelQueries].sort(() => Math.random() - 0.5);
-      searchQueries = shuffled.slice(0, 8);
+      searchQueries = shuffled.slice(0, 10);
     } else {
       // For specific genre, use the predefined queries array
-      // Shuffle and pick a subset for variety
+      // Use more queries for better variety (up to 8 or all available)
       const shuffled = [...genreConfig.queries].sort(() => Math.random() - 0.5);
-      searchQueries = shuffled.slice(0, 5);
+      searchQueries = shuffled.slice(0, Math.min(8, shuffled.length));
     }
 
     // Fetch books from Google Books API for each query
@@ -330,8 +336,8 @@ exports.discoverBooks = onCall(async (request) => {
       .filter(book => book.coverImageUrl && book.coverImageUrl.length > 0)
       // Filter out books without descriptions (required for good UX)
       .filter(book => book.description && book.description.length > 20)
-      // Filter out blacklisted books
-      .filter(book => !isBlacklisted(book))
+      // Filter out blacklisted books (less strict for non-fiction genres)
+      .filter(book => !isBlacklisted(book, genreConfig.isFiction))
       // For fiction genres, require at least one fiction-related category
       .filter(book => {
         if (genreConfig.isFiction) {
@@ -347,6 +353,17 @@ exports.discoverBooks = onCall(async (request) => {
     processedBooks = processedBooks.filter(book => {
       if (seenISBNs.has(book.isbn)) return false;
       seenISBNs.add(book.isbn);
+      return true;
+    });
+
+    // Deduplicate by normalized title + author (prevents same book, different editions)
+    const seenTitleAuthor = new Set();
+    processedBooks = processedBooks.filter(book => {
+      const normalizedTitle = normalizeTitle(book.title);
+      const authorKey = (book.authors || []).slice(0, 1).join(',').toLowerCase();
+      const key = `${normalizedTitle}|${authorKey}`;
+      if (seenTitleAuthor.has(key)) return false;
+      seenTitleAuthor.add(key);
       return true;
     });
 
@@ -380,7 +397,7 @@ exports.discoverBooks = onCall(async (request) => {
  */
 async function searchGoogleBooks(query, maxResults = 10) {
   const encodedQuery = encodeURIComponent(query);
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodedQuery}&maxResults=${maxResults}&printType=books&langRestrict=en`;
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodedQuery}&maxResults=${maxResults}&printType=books&langRestrict=en&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -424,16 +441,51 @@ async function searchGoogleBooks(query, maxResults = 10) {
 
 /**
  * Check if a book is blacklisted (educational, academic, etc.)
+ * @param {Object} book - Book object to check
+ * @param {boolean} isFiction - If true, apply strict title filtering; if false, allow self-help style titles
  */
-function isBlacklisted(book) {
+function isBlacklisted(book, isFiction = true) {
   const titleLower = (book.title || "").toLowerCase();
   const categoriesLower = (book.categories || []).join(" ").toLowerCase();
   const descriptionLower = (book.description || "").toLowerCase();
 
-  // Check title for blacklisted words
-  for (const word of DISCOVERY_CONFIG.blacklistedTitleWords) {
+  // Words that are always blacklisted regardless of genre (textbooks, academic)
+  const alwaysBlacklistedTitleWords = [
+    "dummies", "idiots", "fundamentals", "handbook", "textbook",
+    "workbook", "tutorial", "manual", "reference", "exam", "test prep",
+    "certification", "101", "study guide", "volume", "vol.", "edition",
+    "research methods", "analysis of", "theory of", "principles of",
+    "concepts of", "studies in", "research", "ethics in", "ethics of",
+    "methodology", "introduction to", "foundations of", "handbook of",
+    "journal", "proceedings", "symposium", "dissertation",
+    "encyclopedia", "dictionary", "almanac", "atlas",
+    "through history", "in history", "history of", "american history",
+    // Summary/condensed books - always block these
+    "summary of", "summary:", "in 30 minutes", "in 15 minutes",
+    "in 20 minutes", "key takeaways", "book summary", "quick read",
+    "condensed", "cliff notes", "cliffnotes", "sparknotes", "study notes",
+    "analysis:", "review of", "discussion of"
+  ];
+
+  // Words only blacklisted for fiction (these are normal for self-help/non-fiction)
+  const fictionOnlyBlacklistedTitleWords = [
+    "guide to", "complete guide", "ultimate guide", "beginner's guide",
+    "how to", "learn to", "teach yourself", "for beginners"
+  ];
+
+  // Check title for always-blacklisted words
+  for (const word of alwaysBlacklistedTitleWords) {
     if (titleLower.includes(word)) {
       return true;
+    }
+  }
+
+  // For fiction genres, also check the additional blacklist
+  if (isFiction) {
+    for (const word of fictionOnlyBlacklistedTitleWords) {
+      if (titleLower.includes(word)) {
+        return true;
+      }
     }
   }
 
@@ -483,6 +535,26 @@ function hasFictionCategory(book) {
 }
 
 /**
+ * Normalize a book title for deduplication
+ * Removes subtitles, edition info, and common variations
+ */
+function normalizeTitle(title) {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    // Remove subtitle (everything after colon or dash)
+    .replace(/[:–—-].*$/, '')
+    // Remove edition info
+    .replace(/\b(hardcover|paperback|kindle|audiobook|audio|edition|revised|updated|expanded|anniversary|deluxe)\b/gi, '')
+    // Remove "a novel" or "a memoir" etc
+    .replace(/\ba\s+(novel|memoir|story|tale)\b/gi, '')
+    // Remove punctuation and extra spaces
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Apply user preference scoring to personalize book order
  */
 function applyPreferenceScoring(books, preferences) {
@@ -527,6 +599,307 @@ function applyPreferenceScoring(books, preferences) {
 
 // =============================================================================
 // BOOK LOOKUP FUNCTIONS
+// =============================================================================
+
+// =============================================================================
+// WORKS-BASED BOOK CACHE
+// Groups book editions under canonical "work" records for better data quality
+// See ECOSYSTEM.md "Book Cache Architecture" section for full specification
+// =============================================================================
+
+/**
+ * Generate a normalized work key from title and author
+ * Used as the document ID for works collection
+ *
+ * @param {string} title - Book title
+ * @param {string} author - Primary author name
+ * @returns {string} Normalized work key (e.g., "thinkagain_adamgrant")
+ */
+function generateWorkKey(title, author) {
+  if (!title) return null;
+
+  // Normalize title: lowercase, remove leading articles, remove non-alphanumeric
+  const normalizedTitle = title
+    .toLowerCase()
+    .replace(/^(the|a|an)\s+/i, '')     // Remove leading articles
+    .replace(/[^a-z0-9]/g, '')          // Remove non-alphanumeric
+    .substring(0, 50);                   // Limit length
+
+  // Normalize author: lowercase, remove non-alphanumeric
+  const normalizedAuthor = (author || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .substring(0, 30);
+
+  if (!normalizedTitle) return null;
+
+  return `${normalizedTitle}_${normalizedAuthor}`;
+}
+
+/**
+ * Determine if incoming data should update an existing field
+ * Uses "best data wins" logic per ECOSYSTEM.md specification
+ *
+ * @param {*} existing - Current value in the work document
+ * @param {*} incoming - New value from the scanned edition
+ * @param {string} field - Field name being compared
+ * @returns {boolean} True if incoming should replace existing
+ */
+function shouldUpdateField(existing, incoming, field) {
+  if (!existing) return !!incoming;
+  if (!incoming) return false;
+
+  switch (field) {
+    case 'coverImageUrl':
+      // Prefer HTTPS over HTTP
+      if (!existing.includes('https') && incoming.includes('https')) return true;
+      // Prefer non-thumbnail (larger) images
+      if (existing.includes('zoom=1') && !incoming.includes('zoom=1')) return true;
+      return false;
+    case 'description':
+      // Prefer longer, more complete descriptions
+      return incoming.length > existing.length;
+    case 'pageCount':
+      // Prefer non-null, and prefer higher page counts (usually indicates complete edition)
+      return !existing && incoming;
+    case 'publishDate':
+      // Prefer earlier dates (original publication)
+      if (existing && incoming) {
+        return incoming < existing;
+      }
+      return !existing && incoming;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Get or create a work record for a book
+ * If the work exists, updates it with better data if available
+ * Always creates/updates the isbnIndex entry
+ *
+ * @param {Object} bookData - Book data from API lookup
+ * @param {string} isbn - The ISBN that was looked up
+ * @returns {Object} The work data (merged with any existing data)
+ */
+async function getOrCreateWork(bookData, isbn) {
+  if (!bookData || !bookData.title) {
+    console.log('Cannot create work: missing book data or title');
+    return null;
+  }
+
+  const primaryAuthor = (bookData.authors && bookData.authors[0]) || '';
+  const workKey = generateWorkKey(bookData.title, primaryAuthor);
+
+  if (!workKey) {
+    console.log('Cannot create work: could not generate workKey');
+    return null;
+  }
+
+  console.log(`Works cache: workKey="${workKey}" for "${bookData.title}" by "${primaryAuthor}"`);
+
+  const workRef = db.collection('works').doc(workKey);
+  const isbnIndexRef = db.collection('isbnIndex').doc(isbn);
+
+  try {
+    const workDoc = await workRef.get();
+
+    if (workDoc.exists) {
+      // Work exists - check if we should update with better data
+      const existingWork = workDoc.data();
+      const updates = {};
+
+      // Check each field for potential improvement
+      if (shouldUpdateField(existingWork.coverImageUrl, bookData.coverImageUrl, 'coverImageUrl')) {
+        updates.coverImageUrl = bookData.coverImageUrl;
+        console.log('Works cache: Updating to better cover image');
+      }
+      if (shouldUpdateField(existingWork.description, bookData.description, 'description')) {
+        updates.description = bookData.description;
+        console.log('Works cache: Updating to better description');
+      }
+      if (shouldUpdateField(existingWork.pageCount, bookData.pageCount, 'pageCount')) {
+        updates.pageCount = bookData.pageCount;
+      }
+      if (shouldUpdateField(existingWork.publishDate, bookData.publishDate, 'publishDate')) {
+        updates.publishDate = bookData.publishDate;
+      }
+
+      // Merge categories (union of all editions)
+      const existingCategories = existingWork.categories || [];
+      const newCategories = bookData.categories || [];
+      const mergedCategories = [...new Set([...existingCategories, ...newCategories])];
+      if (mergedCategories.length > existingCategories.length) {
+        updates.categories = mergedCategories;
+      }
+
+      // Add ISBN to editions array if not present
+      const existingEditions = existingWork.editions || [];
+      if (!existingEditions.includes(isbn)) {
+        updates.editions = [...existingEditions, isbn];
+        updates.editionCount = updates.editions.length;
+        console.log(`Works cache: Adding ISBN ${isbn} to editions (now ${updates.editionCount} editions)`);
+      }
+
+      // Apply updates if any
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+        await workRef.update(updates);
+      }
+
+      // Create/update ISBN index entry
+      await isbnIndexRef.set({
+        isbn: isbn,
+        workKey: workKey,
+        format: 'unknown', // Could be enhanced to detect format
+        publisher: bookData.publisher || null,
+        publishDate: bookData.publishDate || null,
+        indexedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Return merged work data
+      const mergedWork = { ...existingWork, ...updates, workKey };
+      return mergedWork;
+
+    } else {
+      // Create new work document
+      const workData = {
+        workKey: workKey,
+        title: bookData.title,
+        authors: bookData.authors || [],
+        primaryAuthor: primaryAuthor,
+        coverImageUrl: bookData.coverImageUrl || null,
+        description: bookData.description || null,
+        genre: bookData.genre || null,
+        categories: bookData.categories || [],
+        pageCount: bookData.pageCount || null,
+        publishDate: bookData.publishDate || null,
+        publisher: bookData.publisher || null,
+        language: bookData.language || 'en',
+
+        // Edition tracking
+        editions: [isbn],
+        primaryIsbn: isbn,
+        editionCount: 1,
+
+        // Metadata
+        apiSource: bookData.apiSource || 'googleBooks',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+
+        // Aggregated stats (initialized)
+        totalReaders: 0,
+        averageRating: bookData.averageRating || null,
+        ratingsCount: bookData.ratingsCount || 0
+      };
+
+      // Use batch write for atomicity
+      const batch = db.batch();
+      batch.set(workRef, workData);
+      batch.set(isbnIndexRef, {
+        isbn: isbn,
+        workKey: workKey,
+        format: 'unknown',
+        publisher: bookData.publisher || null,
+        publishDate: bookData.publishDate || null,
+        indexedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      await batch.commit();
+
+      console.log(`Works cache: Created new work "${workKey}" with ISBN ${isbn}`);
+      return workData;
+    }
+  } catch (error) {
+    console.error('Works cache error:', error);
+    return null;
+  }
+}
+
+/**
+ * Look up a work by ISBN using the isbnIndex
+ *
+ * @param {string} isbn - The ISBN to look up
+ * @returns {Object|null} The work data if found, null otherwise
+ */
+async function getWorkByIsbn(isbn) {
+  try {
+    const isbnIndexRef = db.collection('isbnIndex').doc(isbn);
+    const isbnDoc = await isbnIndexRef.get();
+
+    if (!isbnDoc.exists) {
+      console.log(`Works cache: ISBN ${isbn} not in index`);
+      return null;
+    }
+
+    const { workKey } = isbnDoc.data();
+    const workRef = db.collection('works').doc(workKey);
+    const workDoc = await workRef.get();
+
+    if (!workDoc.exists) {
+      console.log(`Works cache: Work ${workKey} not found (orphaned index entry)`);
+      return null;
+    }
+
+    console.log(`Works cache: Found work "${workKey}" for ISBN ${isbn}`);
+    return { ...workDoc.data(), workKey };
+  } catch (error) {
+    console.error('Works cache lookup error:', error);
+    return null;
+  }
+}
+
+/**
+ * Search works collection by title (for manual search feature)
+ * Uses prefix matching on normalized title
+ *
+ * @param {string} query - Search query (title or partial title)
+ * @param {number} limit - Maximum results to return (default 20)
+ * @returns {Array} Array of matching work records
+ */
+async function searchWorksByTitle(query, limit = 20) {
+  if (!query || query.length < 2) {
+    return [];
+  }
+
+  try {
+    // Normalize the query for searching
+    const normalizedQuery = query
+      .toLowerCase()
+      .replace(/^(the|a|an)\s+/i, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim();
+
+    console.log(`Works cache: Searching for "${normalizedQuery}"`);
+
+    // Firestore doesn't support true full-text search, so we use a workaround:
+    // Query works where title starts with the search term (case-insensitive via lowercase storage)
+    // For better search, we'd need Algolia or similar, but this works for basic cases
+
+    const worksRef = db.collection('works');
+
+    // Get works where the workKey starts with the normalized query
+    // This is a prefix match on the workKey (which includes normalized title)
+    const snapshot = await worksRef
+      .where('workKey', '>=', normalizedQuery)
+      .where('workKey', '<=', normalizedQuery + '\uf8ff')
+      .limit(limit)
+      .get();
+
+    const results = [];
+    snapshot.forEach(doc => {
+      results.push({ ...doc.data(), workKey: doc.id });
+    });
+
+    console.log(`Works cache: Found ${results.length} works matching "${query}"`);
+    return results;
+  } catch (error) {
+    console.error('Works cache search error:', error);
+    return [];
+  }
+}
+
+// =============================================================================
+// END WORKS-BASED BOOK CACHE
 // =============================================================================
 
 /**
@@ -673,7 +1046,7 @@ async function enhanceBookData(book, originalIsbn) {
     }
 
     const encodedQuery = encodeURIComponent(query);
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodedQuery}&maxResults=10&printType=books`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodedQuery}&maxResults=10&printType=books&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -730,8 +1103,15 @@ async function enhanceBookData(book, originalIsbn) {
 }
 
 /**
- * Look up book by ISBN using Open Library and Google Books APIs
- * Caches results in Firestore for faster subsequent lookups
+ * Look up book by ISBN using works-based cache, then API fallback
+ *
+ * Lookup order:
+ * 1. Works cache (isbnIndex -> works) - Fast, high-quality data
+ * 2. Legacy books cache - Backward compatibility during migration
+ * 3. Google Books API - Primary API source
+ * 4. Open Library API - Fallback API source
+ *
+ * After API lookup, caches to both works AND legacy books collection
  */
 exports.lookupBook = onCall(async (request) => {
   const { isbn } = request.data;
@@ -742,45 +1122,122 @@ exports.lookupBook = onCall(async (request) => {
 
   // Clean ISBN (remove dashes, spaces)
   const cleanIsbn = isbn.replace(/[-\s]/g, "");
+  console.log(`lookupBook: Looking up ISBN ${cleanIsbn}`);
 
-  // Check Firestore cache first
+  // ==========================================================================
+  // STEP 1: Check works-based cache (new architecture)
+  // ==========================================================================
+  try {
+    const cachedWork = await getWorkByIsbn(cleanIsbn);
+    if (cachedWork) {
+      console.log(`lookupBook: Found in works cache (workKey: ${cachedWork.workKey})`);
+      // Convert work format to book format for backward compatibility
+      const bookFromWork = {
+        isbn: cleanIsbn,
+        isbn13: cleanIsbn.length === 13 ? cleanIsbn : null,
+        title: cachedWork.title,
+        authors: cachedWork.authors,
+        coverImageUrl: cachedWork.coverImageUrl,
+        description: cachedWork.description,
+        genre: cachedWork.genre,
+        categories: cachedWork.categories,
+        pageCount: cachedWork.pageCount,
+        publishDate: cachedWork.publishDate,
+        publisher: cachedWork.publisher,
+        language: cachedWork.language || 'en',
+        apiSource: cachedWork.apiSource,
+        averageRating: cachedWork.averageRating,
+        ratingsCount: cachedWork.ratingsCount,
+        // Include work metadata
+        workKey: cachedWork.workKey,
+        editionCount: cachedWork.editionCount
+      };
+      return {
+        success: true,
+        book: bookFromWork,
+        source: "worksCache"
+      };
+    }
+  } catch (error) {
+    console.log("Works cache lookup failed:", error.message);
+  }
+
+  // ==========================================================================
+  // STEP 2: Check legacy books cache (backward compatibility)
+  // ==========================================================================
   const cacheQuery = await db.collection("books")
     .where("isbn", "==", cleanIsbn)
     .limit(1)
     .get();
 
   if (!cacheQuery.empty) {
+    const legacyBook = cacheQuery.docs[0].data();
+    console.log(`lookupBook: Found in legacy cache, migrating to works`);
+
+    // Migrate to works cache for future lookups
+    try {
+      await getOrCreateWork(legacyBook, cleanIsbn);
+    } catch (migrationError) {
+      console.log("Migration to works cache failed:", migrationError.message);
+    }
+
     return {
       success: true,
-      book: cacheQuery.docs[0].data(),
+      book: legacyBook,
       source: "cache"
     };
   }
 
-  // Try Open Library API (free, no key required)
-  try {
-    let book = await fetchFromOpenLibrary(cleanIsbn);
-    if (book) {
-      // Enhance if missing cover or description
-      book = await enhanceBookData(book, cleanIsbn);
-      await cacheBook(book);
-      return { success: true, book, source: "openLibrary" };
-    }
-  } catch (error) {
-    console.log("Open Library lookup failed:", error.message);
-  }
-
-  // Fallback to Google Books API
+  // ==========================================================================
+  // STEP 3: Try Google Books API (primary source, better metadata)
+  // ==========================================================================
   try {
     let book = await fetchFromGoogleBooks(cleanIsbn);
     if (book) {
+      console.log(`lookupBook: Found in Google Books API`);
       // Enhance if missing cover or description
-      book = await enhanceBookData(book, cleanIsbn);
-      await cacheBook(book);
+      try {
+        book = await enhanceBookData(book, cleanIsbn);
+      } catch (enhanceError) {
+        console.log("Enhancement failed, using original:", enhanceError.message);
+      }
+
+      // Cache in background (don't block the response)
+      Promise.all([
+        getOrCreateWork(book, cleanIsbn).catch(e => console.log("Works cache failed:", e.message)),
+        cacheBook(book).catch(e => console.log("Legacy cache failed:", e.message))
+      ]).catch(() => {});
+
       return { success: true, book, source: "googleBooks" };
     }
   } catch (error) {
     console.log("Google Books lookup failed:", error.message);
+  }
+
+  // ==========================================================================
+  // STEP 4: Fallback to Open Library API
+  // ==========================================================================
+  try {
+    let book = await fetchFromOpenLibrary(cleanIsbn);
+    if (book) {
+      console.log(`lookupBook: Found in Open Library API`);
+      // Enhance if missing cover or description
+      try {
+        book = await enhanceBookData(book, cleanIsbn);
+      } catch (enhanceError) {
+        console.log("Enhancement failed, using original:", enhanceError.message);
+      }
+
+      // Cache in background (don't block the response)
+      Promise.all([
+        getOrCreateWork(book, cleanIsbn).catch(e => console.log("Works cache failed:", e.message)),
+        cacheBook(book).catch(e => console.log("Legacy cache failed:", e.message))
+      ]).catch(() => {});
+
+      return { success: true, book, source: "openLibrary" };
+    }
+  } catch (error) {
+    console.log("Open Library lookup failed:", error.message);
   }
 
   throw new HttpsError("not-found", "Book not found");
@@ -843,7 +1300,7 @@ async function fetchFromOpenLibrary(isbn) {
  */
 async function fetchFromGoogleBooks(isbn) {
   const response = await fetch(
-    `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+    `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`
   );
 
   if (!response.ok) {
@@ -894,7 +1351,7 @@ exports.revenueCatWebhook = onRequest(async (req, res) => {
   }
 
   try {
-    const event = req.body;
+    const { event } = req.body;
     const { app_user_id, type } = event;
 
     if (!app_user_id) {

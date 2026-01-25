@@ -24,8 +24,9 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Books - global catalog, anyone can read
+    // Books - DEPRECATED legacy cache, anyone can read
     // Authenticated users can update rating fields when reviewing
+    // This collection is being migrated to 'works' collection
     match /books/{bookId} {
       allow read: if true;
       allow create: if false; // Only Cloud Functions create books
@@ -34,6 +35,20 @@ service cloud.firestore {
                       // Only allow updating rating fields
                       request.resource.data.diff(resource.data).affectedKeys()
                         .hasOnly(['averageRating', 'ratingCount', 'updatedAt']);
+    }
+
+    // Works - canonical book records grouped by title+author
+    // Anyone can read, authenticated users can write (for caching)
+    match /works/{workKey} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ISBN Index - fast ISBN to workKey lookup
+    // Anyone can read, authenticated users can write (for caching)
+    match /isbnIndex/{isbn} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     // Lists - owner can write, public lists readable by anyone

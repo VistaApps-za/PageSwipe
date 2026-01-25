@@ -800,8 +800,10 @@ export async function addBookAsOwned(bookData, format, userId) {
         const now = serverTimestamp();
         const itemRef = doc(collection(db, 'items'));
         const itemData = {
+            id: itemRef.id,
             listId: OWNED_ONLY_LIST_ID,
             userId: userId,
+            bookId: isbn,
             title: bookData.title || '',
             authors: bookData.authors || [],
             isbn: isbn,
@@ -809,14 +811,15 @@ export async function addBookAsOwned(bookData, format, userId) {
             description: bookData.description || null,
             pageCount: bookData.pageCount || 0,
             currentPage: 0,
-            status: 'notStarted',
+            status: 'unread',
+            liked: false,
             isOwned: true,
             ownedFormat: format,
             ownedAt: now,
             // Genre fields for filtering
             genre: bookData.genre || null,
             categories: bookData.categories || [],
-            createdAt: now,
+            addedAt: now,
             updatedAt: now
         };
 
@@ -908,6 +911,45 @@ export async function getOwnedBooksCount(userId) {
 }
 
 /**
+ * Migrate books with status "notStarted" to "unread" for iOS compatibility.
+ * iOS uses an enum for ReadingStatus and silently fails to decode unknown values.
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, migrated: number, error?: string}>}
+ */
+export async function migrateNotStartedStatus(userId) {
+    try {
+        if (!userId) {
+            return { success: false, migrated: 0, error: 'User ID required' };
+        }
+
+        // Find all items with status "notStarted"
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId),
+            where('status', '==', 'notStarted')
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, migrated: 0 };
+        }
+
+        // Batch update all items to use "unread" instead
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(docSnap => {
+            batch.update(doc(db, 'items', docSnap.id), { status: 'unread' });
+        });
+
+        await batch.commit();
+
+        return { success: true, migrated: snapshot.size };
+    } catch (error) {
+        console.error('Migrate status error:', error);
+        return { success: false, migrated: 0, error: error.message };
+    }
+}
+
+/**
  * Check if user owns a book by ISBN
  * @param {string} userId - User ID
  * @param {string} isbn - The book ISBN
@@ -982,11 +1024,286 @@ export async function findItemByISBN(userId, isbn) {
 }
 
 // ============================================
-// BOOKS CACHE
+// BOOKS CACHE (Works-Based Architecture)
 // ============================================
 
 /**
- * Cache book data in Firestore
+ * Generate work key from title and author
+ * MUST match Cloud Function logic exactly!
+ * @param {string} title - Book title
+ * @param {string} author - Primary author
+ * @returns {string|null} - Normalized work key or null if invalid
+ */
+export function generateWorkKey(title, author) {
+    if (!title) return null;
+
+    // Normalize title: lowercase, remove leading articles, remove non-alphanumeric
+    const normalizedTitle = title
+        .toLowerCase()
+        .replace(/^(the|a|an)\s+/i, '')     // Remove leading articles
+        .replace(/[^a-z0-9]/g, '')          // Remove non-alphanumeric
+        .substring(0, 50);                   // Limit length
+
+    // Normalize author: lowercase, remove non-alphanumeric
+    const normalizedAuthor = (author || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
+        .substring(0, 30);
+
+    if (!normalizedTitle) return null;
+
+    return `${normalizedTitle}_${normalizedAuthor}`;
+}
+
+/**
+ * Get work by ISBN from isbnIndex + works collections
+ * @param {string} isbn - ISBN to look up
+ * @returns {Promise<{success: boolean, data?: Object, error?: string}>}
+ */
+export async function getWorkByIsbn(isbn) {
+    if (!isbn) return { success: false, error: 'ISBN required' };
+
+    try {
+        console.log(`Works cache: Looking up ISBN ${isbn} in isbnIndex`);
+
+        // Step 1: Check isbnIndex/{isbn}
+        const isbnIndexDoc = await getDoc(doc(db, 'isbnIndex', isbn));
+        if (!isbnIndexDoc.exists()) {
+            console.log(`Works cache: ISBN ${isbn} not found in isbnIndex`);
+            return { success: false, error: 'ISBN not found in index' };
+        }
+
+        const indexData = isbnIndexDoc.data();
+        const workKey = indexData.workKey;
+
+        if (!workKey) {
+            console.log(`Works cache: No workKey for ISBN ${isbn}`);
+            return { success: false, error: 'No workKey in index' };
+        }
+
+        console.log(`Works cache: Found workKey "${workKey}" for ISBN ${isbn}`);
+
+        // Step 2: Get works/{workKey}
+        const workDoc = await getDoc(doc(db, 'works', workKey));
+        if (!workDoc.exists()) {
+            console.log(`Works cache: Work "${workKey}" not found`);
+            return { success: false, error: 'Work not found' };
+        }
+
+        const workData = workDoc.data();
+        console.log(`Works cache: Found work "${workData.title}" by ${workData.primaryAuthor}`);
+
+        // Return work data formatted as a book object
+        return {
+            success: true,
+            data: {
+                id: isbn,
+                isbn: isbn,
+                isbn13: isbn.length === 13 ? isbn : null,
+                title: workData.title,
+                authors: workData.authors || [workData.primaryAuthor],
+                coverImageUrl: workData.coverImageUrl,
+                description: workData.description,
+                genre: workData.genre,
+                categories: workData.categories || [],
+                pageCount: workData.pageCount,
+                publishDate: workData.publishDate,
+                publisher: workData.publisher,
+                language: workData.language || 'en',
+                apiSource: workData.apiSource || 'works',
+                workKey: workKey
+            }
+        };
+    } catch (error) {
+        console.error('Get work by ISBN error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Search works by title
+ * @param {string} queryStr - Search query
+ * @param {number} maxResults - Maximum results to return
+ * @returns {Promise<{success: boolean, data?: Object[], error?: string}>}
+ */
+export async function searchWorksByTitle(queryStr, maxResults = 20) {
+    if (!queryStr || queryStr.length < 2) {
+        return { success: true, data: [] };
+    }
+
+    try {
+        console.log(`Works cache: Searching for "${queryStr}"`);
+
+        // Normalize the search query for comparison
+        const normalizedQuery = queryStr.toLowerCase().trim();
+
+        // Query works collection - Firestore doesn't support full-text search,
+        // so we'll do a prefix match on a lowercase title field
+        // For now, we'll fetch recent works and filter client-side
+        const q = query(
+            collection(db, 'works'),
+            orderBy('updatedAt', 'desc'),
+            limit(100)  // Fetch more to filter
+        );
+
+        const snapshot = await getDocs(q);
+        const matches = [];
+
+        snapshot.docs.forEach(docSnap => {
+            const workData = docSnap.data();
+            const title = (workData.title || '').toLowerCase();
+            const primaryAuthor = (workData.primaryAuthor || '').toLowerCase();
+
+            // Check if title or author contains the query
+            if (title.includes(normalizedQuery) || primaryAuthor.includes(normalizedQuery)) {
+                matches.push({
+                    id: workData.primaryIsbn || docSnap.id,
+                    isbn: workData.primaryIsbn,
+                    title: workData.title,
+                    authors: workData.authors || [workData.primaryAuthor],
+                    coverImageUrl: workData.coverImageUrl,
+                    description: workData.description,
+                    genre: workData.genre,
+                    categories: workData.categories || [],
+                    pageCount: workData.pageCount,
+                    publishDate: workData.publishDate,
+                    publisher: workData.publisher,
+                    language: workData.language || 'en',
+                    apiSource: 'works',
+                    workKey: docSnap.id
+                });
+            }
+        });
+
+        console.log(`Works cache: Found ${matches.length} matches for "${queryStr}"`);
+        return { success: true, data: matches.slice(0, maxResults) };
+    } catch (error) {
+        console.error('Search works by title error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Cache work (create or update) - uses works-based architecture
+ * @param {Object} bookData - Book data to cache
+ * @param {string} isbn - The ISBN for this edition
+ * @returns {Promise<{success: boolean, workKey?: string, error?: string}>}
+ */
+export async function cacheWork(bookData, isbn) {
+    if (!bookData || !bookData.title) {
+        console.log('Works cache: Cannot cache - no book data or title');
+        return { success: false, error: 'No book data' };
+    }
+
+    const isbnToUse = isbn || bookData.isbn;
+    if (!isbnToUse) {
+        console.log('Works cache: Cannot cache - no ISBN');
+        return { success: false, error: 'No ISBN' };
+    }
+
+    try {
+        const primaryAuthor = bookData.authors?.[0] || '';
+        const workKey = generateWorkKey(bookData.title, primaryAuthor);
+
+        if (!workKey) {
+            console.log('Works cache: Could not generate workKey');
+            return { success: false, error: 'Could not generate workKey' };
+        }
+
+        console.log(`Works cache: Caching work "${bookData.title}" with key "${workKey}"`);
+
+        const workRef = doc(db, 'works', workKey);
+        const isbnIndexRef = doc(db, 'isbnIndex', isbnToUse);
+
+        // Check if work already exists
+        const workDoc = await getDoc(workRef);
+
+        if (workDoc.exists()) {
+            // Work exists - update if we have better data
+            const existingWork = workDoc.data();
+            const updates = {};
+
+            // Check each field for potential improvement
+            if (!existingWork.coverImageUrl && bookData.coverImageUrl) {
+                updates.coverImageUrl = bookData.coverImageUrl;
+            } else if (existingWork.coverImageUrl && bookData.coverImageUrl) {
+                // Prefer HTTPS
+                if (!existingWork.coverImageUrl.includes('https') && bookData.coverImageUrl.includes('https')) {
+                    updates.coverImageUrl = bookData.coverImageUrl;
+                }
+            }
+
+            // Prefer longer description
+            if (bookData.description) {
+                if (!existingWork.description || bookData.description.length > existingWork.description.length) {
+                    updates.description = bookData.description;
+                }
+            }
+
+            // Add to editions array if not present
+            const existingEditions = existingWork.editions || [];
+            if (!existingEditions.includes(isbnToUse)) {
+                updates.editions = arrayUnion(isbnToUse);
+                updates.editionCount = (existingWork.editionCount || 1) + 1;
+            }
+
+            // Update if we have changes
+            if (Object.keys(updates).length > 0) {
+                updates.updatedAt = serverTimestamp();
+                await updateDoc(workRef, updates);
+                console.log(`Works cache: Updated work "${workKey}" with new data`);
+            }
+        } else {
+            // Create new work
+            const workData = {
+                workKey: workKey,
+                title: bookData.title,
+                authors: bookData.authors || [],
+                primaryAuthor: primaryAuthor,
+                coverImageUrl: bookData.coverImageUrl || null,
+                description: bookData.description || null,
+                genre: bookData.genre || null,
+                categories: bookData.categories || [],
+                pageCount: bookData.pageCount || null,
+                publishDate: bookData.publishDate || null,
+                publisher: bookData.publisher || null,
+                language: bookData.language || 'en',
+                editions: [isbnToUse],
+                primaryIsbn: isbnToUse,
+                editionCount: 1,
+                apiSource: bookData.apiSource || 'googleBooks',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                totalReaders: 0,
+                averageRating: null,
+                ratingsCount: 0
+            };
+
+            await setDoc(workRef, workData);
+            console.log(`Works cache: Created new work "${workKey}"`);
+        }
+
+        // Create/update ISBN index entry
+        await setDoc(isbnIndexRef, {
+            isbn: isbnToUse,
+            workKey: workKey,
+            format: 'unknown',
+            publisher: bookData.publisher || null,
+            publishDate: bookData.publishDate || null,
+            indexedAt: serverTimestamp()
+        });
+
+        console.log(`Works cache: Indexed ISBN ${isbnToUse} -> ${workKey}`);
+        return { success: true, workKey: workKey };
+    } catch (error) {
+        console.error('Cache work error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Cache book data in Firestore (legacy + works)
+ * Maintains backward compatibility with legacy books collection
  * @param {Object} bookData - Book data to cache
  */
 export async function cacheBook(bookData) {
@@ -994,6 +1311,10 @@ export async function cacheBook(bookData) {
         const bookId = bookData.isbn || bookData.id;
         if (!bookId) return;
 
+        // Cache to new works-based system
+        await cacheWork(bookData, bookId);
+
+        // Also cache to legacy books collection for backward compatibility
         const bookRef = doc(db, 'books', bookId);
         const existing = await getDoc(bookRef);
 
@@ -1025,14 +1346,25 @@ export async function cacheBook(bookData) {
 }
 
 /**
- * Get cached book
+ * Get cached book - checks works cache first, then legacy books collection
  * @param {string} bookId - Book ID or ISBN
  */
 export async function getCachedBook(bookId) {
     try {
-        // First try direct document lookup (web client caches with ISBN as doc ID)
+        // First, try the new works cache
+        const workResult = await getWorkByIsbn(bookId);
+        if (workResult.success) {
+            console.log(`getCachedBook: Found in works cache for ISBN ${bookId}`);
+            return workResult;
+        }
+
+        // Fall back to legacy books collection
+        console.log(`getCachedBook: Checking legacy books collection for ${bookId}`);
+
+        // Try direct document lookup (web client caches with ISBN as doc ID)
         const bookDoc = await getDoc(doc(db, 'books', bookId));
         if (bookDoc.exists()) {
+            console.log(`getCachedBook: Found in legacy books collection (direct lookup)`);
             return { success: true, data: bookDoc.data() };
         }
 
@@ -1044,6 +1376,7 @@ export async function getCachedBook(bookId) {
         );
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
+            console.log(`getCachedBook: Found in legacy books collection (query)`);
             return { success: true, data: snapshot.docs[0].data() };
         }
 
@@ -1648,7 +1981,7 @@ export async function addBookToClub(clubId, bookData, userData) {
             addedBy: addedBy,
             addedAt: serverTimestamp(),
             interestedMembers: [],
-            notInterestedCount: 0
+            notInterestedMembers: []  // Array of MemberInfo objects, matches iOS
         };
 
         await addDoc(collection(db, 'clubs', clubId, 'books'), clubBook);
@@ -2225,7 +2558,8 @@ export async function addBookReview(reviewData) {
             await updateDoc(reviewRef, {
                 rating: reviewData.rating,
                 reviewText: reviewData.reviewText || null,
-                recommend: reviewData.recommend || false,
+                // Use wouldRecommend (iOS standard) but accept recommend for backward compatibility
+                wouldRecommend: reviewData.wouldRecommend ?? reviewData.recommend ?? false,
                 updatedAt: serverTimestamp()
             });
 
@@ -2244,14 +2578,17 @@ export async function addBookReview(reviewData) {
         const review = {
             id: reviewRef.id,
             userId: reviewData.userId,
-            userName: reviewData.userName,
+            // Use userDisplayName (iOS standard) but accept userName for backward compatibility
+            userDisplayName: reviewData.userDisplayName || reviewData.userName,
             userPhotoUrl: reviewData.userPhotoUrl || null,
             bookId: reviewData.bookId,
+            isbn: reviewData.isbn || '',  // Required by iOS
             bookTitle: reviewData.bookTitle,
             bookCoverUrl: reviewData.bookCoverUrl || null,
             rating: reviewData.rating,
             reviewText: reviewData.reviewText || null,
-            recommend: reviewData.recommend || false,
+            // Use wouldRecommend (iOS standard) but accept recommend for backward compatibility
+            wouldRecommend: reviewData.wouldRecommend ?? reviewData.recommend ?? false,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             likes: 0,
@@ -2767,7 +3104,7 @@ export async function refetchBookCover(itemId) {
             query += `+inauthor:${encodeURIComponent(authors[0])}`;
         }
 
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=15`;
+        const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=15&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -2870,4 +3207,267 @@ function generateShareCode() {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
+}
+
+// ============================================
+// MIGRATIONS
+// ============================================
+
+/**
+ * Migrate book items to add missing fields required by iOS.
+ * iOS BookItem requires: bookId, liked, addedAt (not createdAt).
+ * This migration fixes items that were created before these fields were added.
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, migrated: number, error?: string}>}
+ */
+export async function migrateBookItemFields(userId) {
+    try {
+        if (!userId) {
+            return { success: false, migrated: 0, error: 'User ID required' };
+        }
+
+        // Find all items for this user
+        const q = query(
+            collection(db, 'items'),
+            where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, migrated: 0 };
+        }
+
+        // Batch update items that are missing required fields
+        const batch = writeBatch(db);
+        let migratedCount = 0;
+
+        snapshot.docs.forEach(docSnap => {
+            const data = docSnap.data();
+            const updates = {};
+
+            // Add bookId if missing (use isbn as the identifier)
+            if (!data.bookId && data.isbn) {
+                updates.bookId = data.isbn;
+            }
+
+            // Add liked if missing
+            if (data.liked === undefined) {
+                updates.liked = false;
+            }
+
+            // Rename createdAt to addedAt if addedAt is missing
+            if (!data.addedAt && data.createdAt) {
+                updates.addedAt = data.createdAt;
+            } else if (!data.addedAt) {
+                // No addedAt and no createdAt - use current time
+                updates.addedAt = serverTimestamp();
+            }
+
+            // Only update if there are changes
+            if (Object.keys(updates).length > 0) {
+                updates.updatedAt = serverTimestamp();
+                batch.update(doc(db, 'items', docSnap.id), updates);
+                migratedCount++;
+            }
+        });
+
+        if (migratedCount > 0) {
+            await batch.commit();
+            console.log(`Migrated ${migratedCount} book items with missing fields`);
+        }
+
+        return { success: true, migrated: migratedCount };
+    } catch (error) {
+        console.error('Migrate book item fields error:', error);
+        return { success: false, migrated: 0, error: error.message };
+    }
+}
+
+/**
+ * Migrate review fields to match iOS/ECOSYSTEM.md naming conventions.
+ * Fixes:
+ * - userName -> userDisplayName
+ * - recommend -> wouldRecommend
+ * - Adds isbn field if missing
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, migrated: number, error?: string}>}
+ */
+export async function migrateReviewFields(userId) {
+    try {
+        if (!userId) {
+            return { success: false, migrated: 0, error: 'User ID required' };
+        }
+
+        // Find all reviews for this user
+        const q = query(
+            collection(db, 'reviews'),
+            where('userId', '==', userId)
+        );
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            return { success: true, migrated: 0 };
+        }
+
+        // Batch update reviews that need field migration
+        const batch = writeBatch(db);
+        let migratedCount = 0;
+
+        snapshot.docs.forEach(docSnap => {
+            const data = docSnap.data();
+            const updates = {};
+
+            // Migrate userName -> userDisplayName
+            if (data.userName && !data.userDisplayName) {
+                updates.userDisplayName = data.userName;
+            }
+
+            // Migrate recommend -> wouldRecommend
+            if (data.recommend !== undefined && data.wouldRecommend === undefined) {
+                updates.wouldRecommend = data.recommend;
+            }
+
+            // Add isbn field if missing (use empty string as default)
+            if (data.isbn === undefined) {
+                updates.isbn = '';
+            }
+
+            // Only update if there are changes
+            if (Object.keys(updates).length > 0) {
+                updates.updatedAt = serverTimestamp();
+                batch.update(doc(db, 'reviews', docSnap.id), updates);
+                migratedCount++;
+            }
+        });
+
+        if (migratedCount > 0) {
+            await batch.commit();
+            console.log(`Migrated ${migratedCount} reviews with field name updates`);
+        }
+
+        return { success: true, migrated: migratedCount };
+    } catch (error) {
+        console.error('Migrate review fields error:', error);
+        return { success: false, migrated: 0, error: error.message };
+    }
+}
+
+/**
+ * Migrate photoURL fields to photoUrl (lowercase) for consistency.
+ * This standardizes on lowercase 'url' across all collections.
+ *
+ * Collections migrated:
+ * - users/{userId} - photoURL -> photoUrl
+ * - clubs/{clubId}/members/{userId} - photoURL -> photoUrl
+ * - reviews where userId matches - userPhotoURL -> userPhotoUrl
+ *
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, users: number, members: number, reviews: number, error?: string}>}
+ */
+export async function migratePhotoUrlFields(userId) {
+    try {
+        if (!userId) {
+            return { success: false, users: 0, members: 0, reviews: 0, error: 'User ID required' };
+        }
+
+        let usersCount = 0;
+        let membersCount = 0;
+        let reviewsCount = 0;
+
+        // Use batch writes for efficiency
+        let batch = writeBatch(db);
+        let batchSize = 0;
+        const MAX_BATCH_SIZE = 500; // Firestore limit
+
+        // 1. Migrate user document
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            // Only migrate if photoURL exists and photoUrl doesn't
+            if (userData.photoURL !== undefined && userData.photoUrl === undefined) {
+                batch.update(userRef, {
+                    photoUrl: userData.photoURL,
+                    photoURL: deleteField(),
+                    updatedAt: serverTimestamp()
+                });
+                usersCount++;
+                batchSize++;
+            }
+        }
+
+        // 2. Migrate club member documents using collection group query
+        const membersQuery = query(
+            collectionGroup(db, 'members'),
+            where('userId', '==', userId)
+        );
+        const membersSnapshot = await getDocs(membersQuery);
+
+        for (const memberDoc of membersSnapshot.docs) {
+            const memberData = memberDoc.data();
+            // Only migrate if photoURL exists and photoUrl doesn't
+            if (memberData.photoURL !== undefined && memberData.photoUrl === undefined) {
+                if (batchSize >= MAX_BATCH_SIZE) {
+                    // Commit current batch and start a new one
+                    await batch.commit();
+                    batch = writeBatch(db);
+                    batchSize = 0;
+                }
+                batch.update(memberDoc.ref, {
+                    photoUrl: memberData.photoURL,
+                    photoURL: deleteField()
+                });
+                membersCount++;
+                batchSize++;
+            }
+        }
+
+        // 3. Migrate reviews where userId matches
+        const reviewsQuery = query(
+            collection(db, 'reviews'),
+            where('userId', '==', userId)
+        );
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+
+        for (const reviewDoc of reviewsSnapshot.docs) {
+            const reviewData = reviewDoc.data();
+            // Only migrate if userPhotoURL exists and userPhotoUrl doesn't
+            if (reviewData.userPhotoURL !== undefined && reviewData.userPhotoUrl === undefined) {
+                if (batchSize >= MAX_BATCH_SIZE) {
+                    // Commit current batch and start a new one
+                    await batch.commit();
+                    batch = writeBatch(db);
+                    batchSize = 0;
+                }
+                batch.update(reviewDoc.ref, {
+                    userPhotoUrl: reviewData.userPhotoURL,
+                    userPhotoURL: deleteField(),
+                    updatedAt: serverTimestamp()
+                });
+                reviewsCount++;
+                batchSize++;
+            }
+        }
+
+        // Commit remaining batch if there are any updates
+        if (batchSize > 0) {
+            await batch.commit();
+        }
+
+        const totalMigrated = usersCount + membersCount + reviewsCount;
+        if (totalMigrated > 0) {
+            console.log(`Migrated photoUrl fields: ${usersCount} users, ${membersCount} members, ${reviewsCount} reviews`);
+        }
+
+        return {
+            success: true,
+            users: usersCount,
+            members: membersCount,
+            reviews: reviewsCount
+        };
+    } catch (error) {
+        console.error('Migrate photoUrl fields error:', error);
+        return { success: false, users: 0, members: 0, reviews: 0, error: error.message };
+    }
 }

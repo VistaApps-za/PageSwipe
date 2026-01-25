@@ -69,7 +69,10 @@ import {
     getUserReviewForBook,
     checkIfOwned,
     findItemByISBN,
-    addBookAsOwned
+    addBookAsOwned,
+    migrateNotStartedStatus,
+    migrateBookItemFields,
+    migratePhotoUrlFields
 } from './db-service.js';
 
 import {
@@ -241,6 +244,12 @@ const elements = {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Detect PWA standalone mode and add class to body
+    if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+        document.body.classList.add('pwa-standalone');
+        console.log('PWA standalone mode detected');
+    }
+
     initAuth();
     initEventListeners();
     initRapidScannerListeners();
@@ -951,6 +960,11 @@ function closeMobileSidebar() {
 }
 
 function navigateTo(viewName) {
+    // Clear My Books search when leaving the library view
+    if (state.currentView === 'library' && viewName !== 'library') {
+        clearMyBooksSearch();
+    }
+
     // Update sidebar nav items
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.dataset.view === viewName);
@@ -1008,6 +1022,41 @@ async function loadUserData() {
 
     // Preload discovery books in background for instant access
     preloadDiscoveryBooks();
+
+    // Run data migration in background (fixes status field for iOS compatibility)
+    migrateBookStatuses();
+}
+
+/**
+ * Run all data migrations for iOS compatibility and field standardization.
+ * This runs once per session in the background.
+ */
+async function migrateBookStatuses() {
+    if (!state.user) return;
+
+    try {
+        // Migrate status field from 'notStarted' to 'unread'
+        const statusResult = await migrateNotStartedStatus(state.user.uid);
+        if (statusResult.migrated > 0) {
+            console.log(`Migrated ${statusResult.migrated} books from 'notStarted' to 'unread'`);
+        }
+
+        // Fix missing required fields for iOS compatibility
+        const fieldsResult = await migrateBookItemFields(state.user.uid);
+        if (fieldsResult.migrated > 0) {
+            console.log(`Fixed ${fieldsResult.migrated} books with missing required fields`);
+            loadMyBooks();
+        }
+
+        // Migrate photoURL to photoUrl (lowercase) for consistency
+        const photoUrlResult = await migratePhotoUrlFields(state.user.uid);
+        const photoUrlTotal = photoUrlResult.users + photoUrlResult.members + photoUrlResult.reviews;
+        if (photoUrlTotal > 0) {
+            console.log(`Migrated photoUrl fields: ${photoUrlResult.users} users, ${photoUrlResult.members} members, ${photoUrlResult.reviews} reviews`);
+        }
+    } catch (error) {
+        console.error('Migration error:', error);
+    }
 }
 
 async function loadHomeData() {
@@ -2859,7 +2908,26 @@ function renderDiscoveryCards() {
 }
 
 function renderListPicker() {
-    elements.listPicker.innerHTML = state.lists.map(list => `
+    // Build "My Books" option at the top
+    const myBooksOption = `
+        <div class="list-picker-item list-picker-item-owned" data-action="add-owned">
+            <div class="list-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    <path d="M8 7h8"></path>
+                    <path d="M8 11h6"></path>
+                </svg>
+            </div>
+            <div class="list-info">
+                <div class="list-name">My Books</div>
+                <div class="list-count">Add as owned</div>
+            </div>
+        </div>
+    `;
+
+    // Build reading list options
+    const listOptions = state.lists.map(list => `
         <div class="list-picker-item" data-id="${list.id}">
             <div class="list-icon">${getListIcon(list.listType)}</div>
             <div class="list-info">
@@ -2869,10 +2937,42 @@ function renderListPicker() {
         </div>
     `).join('');
 
-    // Add click handlers
-    elements.listPicker.querySelectorAll('.list-picker-item').forEach(item => {
+    // Combine: My Books first, then a divider, then reading lists
+    elements.listPicker.innerHTML = myBooksOption +
+        '<div class="list-picker-divider"></div>' +
+        listOptions;
+
+    // Add click handler for "My Books" option
+    const myBooksItem = elements.listPicker.querySelector('[data-action="add-owned"]');
+    if (myBooksItem) {
+        myBooksItem.addEventListener('click', handleAddBookAsOwned);
+    }
+
+    // Add click handlers for reading lists
+    elements.listPicker.querySelectorAll('.list-picker-item[data-id]').forEach(item => {
         item.addEventListener('click', () => addBookToSelectedList(item.dataset.id));
     });
+}
+
+async function handleAddBookAsOwned() {
+    if (!state.selectedBook || !state.user) return;
+
+    showLoading();
+    const result = await addBookAsOwned(state.selectedBook, 'physical', state.user.uid);
+    hideLoading();
+
+    if (result.success) {
+        showToast('Added to My Books!', 'success');
+        closeAllModals();
+        state.selectedBook = null;
+        loadLibraryData();
+    } else if (result.alreadyOwned) {
+        showToast('Book already in My Books', 'info');
+        closeAllModals();
+        state.selectedBook = null;
+    } else {
+        showToast(result.error || 'Failed to add book', 'error');
+    }
 }
 
 // ============================================
@@ -3138,18 +3238,26 @@ function createActivityItem(activity) {
 }
 
 function createSearchResultItem(book) {
+    // Encode book data as base64 to avoid HTML attribute escaping issues
+    const bookDataEncoded = btoa(encodeURIComponent(JSON.stringify(book)));
     return `
-        <div class="search-result-item" data-book='${JSON.stringify(book).replace(/'/g, "\\'")}'>
+        <div class="search-result-item" data-book="${bookDataEncoded}">
             <div class="search-result-cover">
-                ${book.coverImageUrl ? `<img src="${book.coverImageUrl}" alt="${book.title}">` : ''}
+                ${book.coverImageUrl ? `<img src="${book.coverImageUrl}" alt="${escapeHtml(book.title)}">` : ''}
             </div>
             <div class="search-result-info">
-                <div class="search-result-title">${book.title}</div>
-                <div class="search-result-author">${book.authors?.join(', ') || 'Unknown Author'}</div>
+                <div class="search-result-title">${escapeHtml(book.title)}</div>
+                <div class="search-result-author">${escapeHtml(book.authors?.join(', ') || 'Unknown Author')}</div>
                 <div class="search-result-meta">${book.pageCount ? `${book.pageCount} pages` : ''}</div>
             </div>
         </div>
     `;
+}
+
+// Helper to escape HTML special characters
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ============================================
@@ -4344,7 +4452,8 @@ async function handleBookSearch() {
         // Add click handlers
         elements.bookSearchResults.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', () => {
-                const bookData = JSON.parse(item.dataset.book);
+                // Decode base64-encoded book data
+                const bookData = JSON.parse(decodeURIComponent(atob(item.dataset.book)));
                 state.selectedBook = bookData;
                 closeAllModals();
                 renderListPicker();
@@ -4553,6 +4662,35 @@ function closeAllModals() {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.classList.remove('open');
     });
+
+    // Clear Add Book search when modal closes (always start fresh)
+    clearAddBookSearch();
+}
+
+/**
+ * Clear the Add Book modal search input and results
+ */
+function clearAddBookSearch() {
+    if (elements.bookSearchInput) {
+        elements.bookSearchInput.value = '';
+    }
+    if (elements.bookSearchResults) {
+        elements.bookSearchResults.innerHTML = '<div class="search-prompt"><span>📚</span><p>Search for books by title or author</p></div>';
+    }
+}
+
+/**
+ * Clear the My Books search input
+ */
+function clearMyBooksSearch() {
+    if (elements.myBooksSearch) {
+        elements.myBooksSearch.value = '';
+        state.ownedBooksSearch = '';
+        // Only re-render if we have data loaded
+        if (state.ownedBooks && state.ownedBooks.length > 0) {
+            renderMyBooks();
+        }
+    }
 }
 
 window.openBookDetailModal = function(bookDataStr) {

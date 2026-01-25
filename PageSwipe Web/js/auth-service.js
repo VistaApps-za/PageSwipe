@@ -292,6 +292,7 @@ function getErrorMessage(errorCode) {
 
 /**
  * Get user profile from Firestore
+ * If document is missing but auth exists, recreates the document
  * @param {string} userId - User ID
  */
 export async function getUserProfile(userId) {
@@ -300,9 +301,47 @@ export async function getUserProfile(userId) {
         if (userDoc.exists()) {
             return { success: true, data: userDoc.data() };
         }
+
+        // User document missing - try to recreate if auth exists
+        const authUser = auth.currentUser;
+        if (authUser && authUser.uid === userId) {
+            console.log('User document missing - recreating for:', userId);
+            const userData = await ensureUserDocumentExists(authUser);
+            if (userData) {
+                return { success: true, data: userData };
+            }
+        }
+
         return { success: false, error: 'User not found' };
     } catch (error) {
         console.error('Get user profile error:', error);
         return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Ensures a user document exists in Firestore
+ * Called when auth exists but Firestore document is missing
+ * @param {Object} authUser - Firebase auth user
+ */
+async function ensureUserDocumentExists(authUser) {
+    try {
+        // Determine auth provider from provider data
+        let authProvider = 'email';
+        if (authUser.providerData && authUser.providerData.length > 0) {
+            const providerId = authUser.providerData[0].providerId;
+            if (providerId === 'apple.com') {
+                authProvider = 'apple';
+            } else if (providerId === 'google.com') {
+                authProvider = 'google';
+            }
+        }
+
+        const userData = await createUserDocument(authUser, authProvider);
+        console.log('Successfully recreated user document for:', authUser.uid);
+        return userData;
+    } catch (error) {
+        console.error('Error recreating user document:', error);
+        return null;
     }
 }

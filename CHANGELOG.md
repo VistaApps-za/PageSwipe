@@ -8,6 +8,63 @@ Format: Each entry includes the change description and affected files.
 
 ---
 
+## [2026-01-25] - Works-Based Book Cache Architecture
+
+### Added
+
+- **Works-Based Book Cache** - Major architectural improvement for book data storage
+  - Books now grouped by "work" (title + author) instead of individual ISBNs
+  - Multiple editions (hardcover, paperback, etc.) share the same canonical data
+  - "Best data wins" - uses best cover/description from any edition
+  - Manual search now checks local cache before API calls
+  - Reduces Google Books API dependency significantly
+  - Full architecture documented in ECOSYSTEM.md "Book Cache Architecture" section
+  - (files: `ECOSYSTEM.md`, `functions/index.js`, `firestore.rules`)
+
+- **Works Collection** - New Firestore collection for canonical book data
+  - Document ID: normalized `{title}_{author}` (workKey)
+  - Tracks all known ISBNs in `editions` array
+  - Stores best available metadata across all editions
+  - (collection: `works`)
+
+- **ISBN Index Collection** - Fast ISBN → workKey lookup
+  - O(1) lookup time for any ISBN
+  - Points to parent work document
+  - (collection: `isbnIndex`)
+
+- **Add to My Books from Manual Search** - Users can now add books to their library when manually searching by title/author
+  - iOS: "My Books" option added to ListPickerView (top of list, orange accent)
+  - Web: "My Books" option added to list-picker-modal (top of list, primary color border)
+  - Books added as owned default to `physical` format (no format picker)
+  - (files: `PageSwipe/Views/Library/AddBookView.swift`, `PageSwipe Web/js/app.js`, `PageSwipe Web/css/app.css`)
+
+- **Google Books API Key** - Added API key for higher rate limits
+  - 1,000 requests/day free tier
+  - Added to all Google Books API calls (Cloud Functions, Web, iOS)
+  - (files: `functions/index.js`, `PageSwipe Web/js/book-lookup.js`, `BookLookupService.swift`)
+
+### Changed
+
+- **Book Lookup Flow** - Now checks works cache first
+  - ISBN lookup: isbnIndex → works → legacy books → API
+  - Title search: works collection → Google Books API
+  - API results cached to works collection automatically
+  - (files: `functions/index.js`, `book-lookup.js`, `db-service.js`, `BookLookupService.swift`)
+
+- **Format Selection Removed** - Simplified ownership model
+  - All owned books now default to `physical` format
+  - No format picker shown to users (ebook/audiobook options removed from UI)
+  - Design decision documented in ECOSYSTEM.md
+  - (files: `ECOSYSTEM.md`)
+
+### Technical Notes
+
+- Legacy `books` collection maintained for backward compatibility
+- Books hitting legacy cache auto-migrate to works cache
+- `generateWorkKey()` function identical across Cloud Functions, Web, and iOS
+
+---
+
 ## [2026-01-23] - v1.0 MVP Release
 
 ### Added

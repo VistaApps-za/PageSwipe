@@ -3,7 +3,7 @@
  * Handles book searches using Cloud Functions and fallback APIs
  */
 
-import { getCachedBook, cacheBook } from './db-service.js';
+import { getCachedBook, getWorkByIsbn, searchWorksByTitle } from './db-service.js';
 import { db, functions } from './firebase-config.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 import {
@@ -62,9 +62,22 @@ export async function searchBooks(query, maxResults = 20) {
             return await lookupByISBN(cleanQuery);
         }
 
-        // General search using Google Books
+        // First, check works cache for matching titles (non-blocking - always fall through to API if cache fails)
+        try {
+            console.log(`searchBooks: Checking works cache for "${query}"`);
+            const worksResult = await searchWorksByTitle(query, maxResults);
+            if (worksResult.success && worksResult.data && worksResult.data.length > 0) {
+                console.log(`searchBooks: Found ${worksResult.data.length} results in works cache`);
+                return { success: true, data: worksResult.data };
+            }
+            console.log(`searchBooks: No cache results, searching Google Books API`);
+        } catch (cacheError) {
+            console.warn('Works cache search failed, falling back to API:', cacheError);
+        }
+
+        // No cache results - search using Google Books
         const response = await fetch(
-            `${GOOGLE_BOOKS_API}?q=${encodeURIComponent(query)}&maxResults=${maxResults}&orderBy=relevance&printType=books&langRestrict=en`
+            `${GOOGLE_BOOKS_API}?q=${encodeURIComponent(query)}&maxResults=${maxResults}&orderBy=relevance&printType=books&langRestrict=en&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`
         );
 
         if (!response.ok) {
@@ -81,6 +94,7 @@ export async function searchBooks(query, maxResults = 20) {
             .map(item => parseGoogleBooksResult(item))
             .filter(book => book.title); // Filter out items without titles
 
+        // Note: Cloud Functions handle caching - clients are read-only
         return { success: true, data: books };
     } catch (error) {
         console.error('Search books error:', error);
@@ -90,34 +104,52 @@ export async function searchBooks(query, maxResults = 20) {
 
 /**
  * Lookup book by ISBN
- * Uses Cloud Function which handles enhancement automatically
+ * Uses works cache first, then Cloud Function, then direct API
  * @param {string} isbn - ISBN (10 or 13 digits)
  * @returns {Promise<Object>} - Book data
  */
 export async function lookupByISBN(isbn) {
     try {
-        // First check cache
-        const cached = await getCachedBook(isbn);
-        if (cached.success) {
-            return { success: true, data: [cached.data] };
+        // First check works cache (new architecture) - non-blocking on failure
+        try {
+            console.log(`lookupByISBN: Checking works cache for ISBN ${isbn}`);
+            const workResult = await getWorkByIsbn(isbn);
+            if (workResult.success) {
+                console.log(`lookupByISBN: Found in works cache - "${workResult.data.title}"`);
+                return { success: true, data: [workResult.data] };
+            }
+        } catch (cacheError) {
+            console.warn('lookupByISBN: Works cache check failed:', cacheError);
         }
 
-        // Use Cloud Function (handles enhancement automatically)
+        // Fall back to legacy cache check - non-blocking on failure
         try {
-            console.log('Calling Cloud Function for ISBN:', isbn);
+            console.log(`lookupByISBN: Checking legacy cache for ISBN ${isbn}`);
+            const cached = await getCachedBook(isbn);
+            if (cached.success) {
+                console.log(`lookupByISBN: Found in legacy cache`);
+                return { success: true, data: [cached.data] };
+            }
+        } catch (legacyCacheError) {
+            console.warn('lookupByISBN: Legacy cache check failed:', legacyCacheError);
+        }
+
+        // Use Cloud Function (handles enhancement and caching automatically)
+        try {
+            console.log('lookupByISBN: Calling Cloud Function for ISBN:', isbn);
             const result = await lookupBookFunction({ isbn });
-            console.log('Cloud Function result:', result.data);
+            console.log('lookupByISBN: Cloud Function result:', result.data);
             if (result.data?.success && result.data?.book) {
                 const book = result.data.book;
-                // Cache the good Cloud Function result
-                await cacheBook(book);
+                // Note: Cloud Function handles caching - clients are read-only
                 return { success: true, data: [book] };
             }
         } catch (cloudError) {
-            console.error('Cloud Function lookup failed:', cloudError);
+            console.error('lookupByISBN: Cloud Function lookup failed:', cloudError);
         }
 
         // Fallback to direct Google Books API with client-side enhancement
+        console.log('lookupByISBN: Falling back to direct Google Books API');
         const googleResult = await fetchFromGoogleBooks(isbn);
         if (googleResult.success) {
             const book = googleResult.data;
@@ -125,9 +157,11 @@ export async function lookupByISBN(isbn) {
             // If missing cover or description, try to find a better version by title+author
             if (!book.coverImageUrl || !book.description) {
                 const enhancedBook = await enhanceBookData(book, isbn);
+                // Note: Cloud Functions handle caching - clients are read-only
                 return { success: true, data: [enhancedBook] };
             }
 
+            // Note: Cloud Functions handle caching - clients are read-only
             return { success: true, data: [book] };
         }
 
@@ -153,7 +187,7 @@ async function enhanceBookData(originalBook, originalIsbn) {
             : originalBook.title;
 
         const encodedQuery = encodeURIComponent(searchQuery);
-        const response = await fetch(`${GOOGLE_BOOKS_API}?q=${encodedQuery}&maxResults=5`);
+        const response = await fetch(`${GOOGLE_BOOKS_API}?q=${encodedQuery}&maxResults=5&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`);
 
         if (!response.ok) return originalBook;
 
@@ -189,8 +223,8 @@ async function enhanceBookData(originalBook, originalIsbn) {
                 }
 
                 // If we now have both, we're done
+                // Note: Cloud Functions handle caching - clients are read-only
                 if (enhanced.coverImageUrl && enhanced.description) {
-                    await cacheBook(enhanced);
                     return enhanced;
                 }
             }
@@ -261,9 +295,7 @@ async function fetchFromOpenLibrary(isbn) {
             apiSource: 'openLibrary'
         };
 
-        // Cache the book
-        await cacheBook(book);
-
+        // Note: Cloud Functions handle caching - clients are read-only
         return { success: true, data: book };
     } catch (error) {
         console.error('Open Library fetch error:', error);
@@ -277,7 +309,7 @@ async function fetchFromOpenLibrary(isbn) {
  */
 async function fetchFromGoogleBooks(isbn) {
     try {
-        const response = await fetch(`${GOOGLE_BOOKS_API}?q=isbn:${isbn}`);
+        const response = await fetch(`${GOOGLE_BOOKS_API}?q=isbn:${isbn}&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`);
 
         if (!response.ok) {
             return { success: false, error: 'Book not found' };
@@ -377,18 +409,17 @@ export async function discoverBooks(genre = 'random', excludeISBNs = [], limit =
                 book.title !== genre // Ensure title isn't accidentally the genre
             );
 
-            if (validBooks.length > 0) {
-                return { success: true, data: validBooks, genre: result.data.genre };
-            }
+            // Return even if 0 books - this is valid when all books have been seen
+            return { success: true, data: validBooks, genre: result.data.genre };
         }
 
-        // If cloud function returns invalid data, use fallback
-        console.warn('Cloud function returned invalid data, using fallback');
-        return await getDiscoveryBooksFallback(genre, limit);
+        // If cloud function returns invalid structure, use fallback
+        console.warn('Cloud function returned invalid data structure, using fallback');
+        return await getDiscoveryBooksFallback(genre, limit, excludeISBNs);
     } catch (error) {
         console.error('Discover books cloud function error:', error);
         // Fallback to local API if cloud function fails
-        return await getDiscoveryBooksFallback(genre, limit);
+        return await getDiscoveryBooksFallback(genre, limit, excludeISBNs);
     }
 }
 
@@ -415,8 +446,9 @@ export async function getDiscoveryBooks(maxResults = 20, excludeISBNs = []) {
  * Fallback discovery using direct API calls (when cloud function is unavailable)
  * @param {string} genre - Genre to search for
  * @param {number} maxResults - Maximum results
+ * @param {string[]} excludeISBNs - ISBNs to exclude from results
  */
-async function getDiscoveryBooksFallback(genre, maxResults = 20) {
+async function getDiscoveryBooksFallback(genre, maxResults = 20, excludeISBNs = []) {
     try {
         let searchQuery;
 
@@ -435,7 +467,7 @@ async function getDiscoveryBooksFallback(genre, maxResults = 20) {
         }
 
         const response = await fetch(
-            `${GOOGLE_BOOKS_API}?q=${encodeURIComponent(searchQuery)}&maxResults=${maxResults}&orderBy=relevance&printType=books&langRestrict=en`
+            `${GOOGLE_BOOKS_API}?q=${encodeURIComponent(searchQuery)}&maxResults=${maxResults}&orderBy=relevance&printType=books&langRestrict=en&key=AIzaSyCD47NvRYDd1tOBg8y_qkaCT2N9slSp43I`
         );
 
         if (!response.ok) {
@@ -454,7 +486,9 @@ async function getDiscoveryBooksFallback(genre, maxResults = 20) {
                 book.title &&
                 book.coverImageUrl &&
                 book.description &&
-                book.description.length > 50
+                book.description.length > 50 &&
+                // Exclude already seen ISBNs
+                (!book.isbn || !excludeISBNs.includes(book.isbn))
             );
 
         const shuffled = books.sort(() => Math.random() - 0.5);

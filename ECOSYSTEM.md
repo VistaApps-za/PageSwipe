@@ -64,7 +64,9 @@
 |------------|-------------|-------------|
 | `users` | User profiles and settings | Firebase Auth UID |
 | `userPreferences` | Personalization data (genre/author scores) | Firebase Auth UID |
-| `books` | Global book catalog cache | ISBN or Google Books ID |
+| `works` | Canonical book data (grouped by title+author) | workKey (normalized) |
+| `isbnIndex` | Fast ISBN → workKey lookup | ISBN |
+| `books` | **DEPRECATED** - Legacy book cache, being migrated to works | ISBN or Google Books ID |
 | `lists` | User's book lists | Auto-generated or `{userId}_{listType}` |
 | `items` | Books within lists | Auto-generated |
 | `clubs` | Book clubs | Auto-generated |
@@ -405,6 +407,236 @@ type ReadingStatus = 'unread' | 'reading' | 'read' | 'notInterested';
 ```typescript
 type OwnedFormat = 'physical' | 'ebook' | 'audiobook';
 ```
+
+> **Design Decision:** All owned books default to `'physical'` format. No format picker is shown to users. PageSwipe is designed for cataloging physical book collections. The ebook/audiobook options are retained in the schema for potential future use but are not exposed in the UI.
+
+---
+
+## Book Cache Architecture
+
+PageSwipe maintains its own book database to reduce API dependency and improve data quality. This architecture groups book editions together under a canonical "work" to provide the best metadata regardless of which ISBN is scanned.
+
+### Design Principles
+
+1. **Own the architecture** - No dependency on external ID systems (e.g., Open Library Work IDs)
+2. **Best data wins** - Store the best cover, description, etc. from any edition
+3. **ISBN agnostic** - Users get the same quality experience regardless of which edition they scan
+4. **API fallback chain** - Cache first, then APIs, with graceful degradation
+5. **Manual search support** - Title/author searches hit our cache before external APIs
+
+### Collections
+
+| Collection | Purpose | Document ID |
+|------------|---------|-------------|
+| `works` | Canonical book data grouped by title+author | workKey (normalized) |
+| `isbnIndex` | Fast ISBN → workKey lookup | ISBN |
+
+### Work Key Generation
+
+The `workKey` is a normalized, deterministic identifier generated from title + primary author:
+
+```typescript
+function generateWorkKey(title: string, author: string): string {
+  const normalizedTitle = title
+    .toLowerCase()
+    .replace(/^(the|a|an)\s+/i, '')     // Remove leading articles
+    .replace(/[^a-z0-9]/g, '')          // Remove non-alphanumeric
+    .substring(0, 50);                   // Limit length
+
+  const normalizedAuthor = author
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .substring(0, 30);
+
+  return `${normalizedTitle}_${normalizedAuthor}`;
+}
+
+// Examples:
+// "Think Again" + "Adam Grant" → "thinkagain_adamgrant"
+// "The Great Gatsby" + "F. Scott Fitzgerald" → "greatgatsby_fscottfitzgerald"
+// "A Tale of Two Cities" + "Charles Dickens" → "taleoftwocities_charlesdickens"
+```
+
+### Data Models
+
+#### Work (Canonical Book Record)
+
+```typescript
+interface Work {
+  workKey: string;                 // Primary key (normalized title_author)
+  title: string;                   // Display title (best available)
+  authors: string[];               // All known authors
+  primaryAuthor: string;           // First/main author
+  coverImageUrl: string | null;    // Best available cover
+  description: string | null;      // Best available description
+  genre: string | null;            // Primary genre
+  categories: string[];            // All categories
+  pageCount: number | null;        // Representative page count
+  publishDate: string | null;      // Earliest known publish date
+  publisher: string | null;        // Original/primary publisher
+  language: string;                // Default: 'en'
+
+  // Edition tracking
+  editions: string[];              // Array of known ISBNs
+  primaryIsbn: string;             // ISBN with best metadata
+  editionCount: number;            // Count of known editions
+
+  // Metadata
+  apiSource: 'googleBooks' | 'openLibrary' | 'manual';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+
+  // Aggregated stats
+  totalReaders: number;
+  averageRating: number | null;
+  ratingsCount: number;
+}
+```
+
+#### ISBNIndex (Lookup Record)
+
+```typescript
+interface ISBNIndex {
+  isbn: string;                    // The ISBN (document ID)
+  workKey: string;                 // Reference to parent work
+  format: 'hardcover' | 'paperback' | 'ebook' | 'audiobook' | 'unknown';
+  publisher: string | null;        // Edition-specific publisher
+  publishDate: string | null;      // Edition-specific date
+  indexedAt: Timestamp;
+}
+```
+
+### Lookup Flow
+
+#### ISBN Lookup (Barcode Scan)
+
+```
+1. Check isbnIndex/{isbn}
+   ├─ Found → Get works/{workKey} → Return work data
+   └─ Not found → Continue to step 2
+
+2. Call Google Books API (with API key)
+   ├─ Found → Continue to step 3
+   └─ Not found → Try Open Library API
+                  ├─ Found → Continue to step 3
+                  └─ Not found → Return error
+
+3. Generate workKey from title + author
+
+4. Check works/{workKey}
+   ├─ Exists → Update if this edition has better data
+   │           Add ISBN to editions array
+   │           Create isbnIndex entry
+   │           Return work data
+   └─ Not exists → Create new work
+                   Create isbnIndex entry
+                   Return work data
+```
+
+#### Title/Author Search (Manual Search)
+
+```
+1. Normalize search query
+2. Query works collection by title (case-insensitive prefix match)
+   ├─ Found matches → Return from cache
+   └─ No matches → Continue to step 3
+
+3. Call Google Books API
+   ├─ Found → For each result:
+   │           Generate workKey
+   │           Check if work exists (update or create)
+   │           Return results
+   └─ Not found → Try Open Library search
+                  └─ Return results or empty
+```
+
+### Best Data Selection
+
+When multiple editions exist, select the best data using these priorities:
+
+| Field | Priority Order |
+|-------|----------------|
+| coverImageUrl | Highest resolution, HTTPS, actually loads |
+| description | Longest, most complete (non-truncated) |
+| pageCount | From primary/hardcover edition |
+| publishDate | Earliest known date |
+| categories | Union of all edition categories |
+
+```typescript
+function shouldUpdateField(existing: any, incoming: any, field: string): boolean {
+  if (!existing) return !!incoming;
+  if (!incoming) return false;
+
+  switch (field) {
+    case 'coverImageUrl':
+      // Prefer HTTPS, higher resolution
+      return !existing.includes('https') && incoming.includes('https');
+    case 'description':
+      // Prefer longer descriptions
+      return incoming.length > existing.length;
+    case 'pageCount':
+      // Prefer non-null
+      return !existing && incoming;
+    default:
+      return false;
+  }
+}
+```
+
+### API Fallback Chain
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Book Lookup                         │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │   1. Firestore Cache  │ ◄── Free, unlimited, fast
+              │   (works + isbnIndex) │
+              └───────────────────────┘
+                          │ miss
+                          ▼
+              ┌───────────────────────┐
+              │   2. Google Books API │ ◄── 1,000/day free (with API key)
+              │   (primary source)    │     Best metadata quality
+              └───────────────────────┘
+                          │ miss/error
+                          ▼
+              ┌───────────────────────┐
+              │  3. Open Library API  │ ◄── Unlimited, free
+              │  (fallback source)    │     Good coverage, variable quality
+              └───────────────────────┘
+                          │ miss
+                          ▼
+              ┌───────────────────────┐
+              │   4. Return Error     │
+              │   "Book not found"    │
+              └───────────────────────┘
+```
+
+### Migration Strategy
+
+Existing `books` collection data will be migrated to the new structure:
+
+1. **Read existing book document**
+2. **Generate workKey** from title + primary author
+3. **Create/update work** in `works` collection
+4. **Create isbnIndex entry** pointing to work
+5. **Mark old document as migrated** (don't delete immediately)
+
+Migration runs as a one-time Cloud Function with batch processing.
+
+### API Key Management
+
+| API | Key Location | Limit |
+|-----|--------------|-------|
+| Google Books | Hardcoded in source (safe - read-only API) | 1,000/day free |
+| Open Library | No key required | Unlimited |
+
+> **Note:** Google Books API key is safe to include in client code as it only allows read operations and is restricted to the Books API.
+
+---
 
 ### InteractionType (for preference scoring)
 ```typescript

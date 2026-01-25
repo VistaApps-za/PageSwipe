@@ -339,6 +339,91 @@ match /items/{itemId} {
 
 ---
 
+## Long-Term Vision: PageSwipe Book Data API
+
+**Status:** Future Opportunity
+**Prerequisite:** Significant user base and works collection
+
+### Overview
+
+As PageSwipe grows, the `works` collection becomes a valuable, curated book database. This could be monetized as a Book Data API for other developers and apps.
+
+### Market Opportunity
+
+| Provider | Status | Gap |
+|----------|--------|-----|
+| Goodreads API | **Shut down (2020)** | Huge gap in market |
+| Google Books | Rate limited, no user data | No reading insights |
+| Open Library | Variable quality | Gaps in newer books |
+| ISBNdb | $10-50/month | No user data |
+| Bowker/Nielsen | $$$ enterprise | Overkill for indie apps |
+
+**The Goodreads shutdown left thousands of apps stranded.** There is genuine demand for a reliable book API with user insights.
+
+### What Makes PageSwipe Data Valuable
+
+1. **Works-based grouping** - Editions linked by title+author (most APIs don't do this)
+2. **Curated quality** - "Best cover/description wins" from any edition
+3. **User reading data** - Average reading time, popularity, ratings
+4. **Clean normalization** - Consistent genre/category taxonomy
+5. **Organic growth** - Every user scan enriches the database
+
+### Phased Approach
+
+**Phase 1: Build the Database (Current)**
+- Every barcode scan adds to `works` collection
+- Target: 100,000+ works = competitive coverage
+- Unique data: reading stats, user ratings, popularity
+
+**Phase 2: Enrich with Unique Insights**
+- Average reading time per book (from user reading sessions)
+- Popularity trends by region/demographic
+- "Similar books" based on user co-ownership patterns
+- Review/rating aggregation
+
+**Phase 3: API Product**
+
+| Tier | Price | Limit | Features |
+|------|-------|-------|----------|
+| Free | $0 | 100/day | Basic book lookup |
+| Developer | $29/mo | 10,000/day | Full metadata, covers |
+| Business | $99/mo | 100,000/day | User insights, trends |
+| Enterprise | Custom | Unlimited | Bulk export, SLA |
+
+### API Endpoints (Conceptual)
+
+```
+GET /v1/books/{isbn}          → Book metadata by ISBN
+GET /v1/works/{workKey}       → Canonical work with all editions
+GET /v1/search?q=             → Search by title/author
+GET /v1/books/{isbn}/stats    → Reading stats (avg time, popularity)
+GET /v1/trending              → Currently popular books
+```
+
+### Revenue Potential
+
+- 1,000 developers × $29/mo = $29,000/mo
+- 100 businesses × $99/mo = $9,900/mo
+- 10 enterprise × $500/mo = $5,000/mo
+- **Total potential: $44,000/mo ($528k/year)**
+
+### Prerequisites
+
+1. **Scale:** Need 100k+ active users scanning books
+2. **Data quality:** Robust deduplication and curation
+3. **Legal:** Ensure terms allow data aggregation/redistribution
+4. **Infrastructure:** API gateway, rate limiting, authentication
+
+### Why This Could Work
+
+- Goodreads API shutdown created a vacuum
+- Book apps desperately need reliable data
+- PageSwipe has unique user insight data
+- Works-based architecture is superior to ISBN-only
+- Growing database = compounding asset value
+
+---
+
 ## Completed Features
 
 *See [CHANGELOG.md](./CHANGELOG.md) for released features.*

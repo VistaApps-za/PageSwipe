@@ -36,6 +36,12 @@
     <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+    <!-- Detect PWA standalone mode immediately to prevent layout shift -->
+    <script>
+        if (window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+            document.body.classList.add('pwa-standalone');
+        }
+    </script>
     <div id="app">
         <!-- Loading Screen (shown during auth check) -->
         <div id="loading-screen" class="loading-screen">
